@@ -410,6 +410,7 @@
                                     <option value="tsp">teaspoon</option>
                                     <option value="ml">milliliters (ml)</option>
                                     <option value="fl_oz">fluid oz</option>
+                                    <option value="piece">piece/item</option>
                                     <option value="serving">serving</option>
                                 </select>
                             </div>
@@ -434,6 +435,12 @@
                         <div class="form-group">
                             <label for="fiber">Fiber (g) <span style="font-weight: normal; color: #999;">(optional)</span></label>
                             <input type="number" id="fiber" step="0.1" min="0" value="0">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="calories">Calories <span style="font-weight: normal; color: #999;">(optional - auto-calculated if blank)</span></label>
+                            <input type="number" id="calories" step="1" min="0" placeholder="Leave blank to auto-calculate">
+                            <small style="color: #666; font-size: 0.85rem;">Auto-calc: (Protein × 4) + (Carbs × 4) + (Fats × 9)</small>
                         </div>
 
                         <button type="submit" class="btn" id="submitFoodBtn">Add to Database</button>
@@ -540,6 +547,7 @@
                             <option value="cup">cups</option>
                             <option value="tbsp">tablespoons</option>
                             <option value="tsp">teaspoons</option>
+                            <option value="piece">pieces</option>
                         </select>
                     </div>
                     <small style="color: #666; font-size: 0.85rem;">Choose servings or measure by weight/volume</small>
@@ -592,6 +600,7 @@
             'tsp': 5,    // ml
             'ml': 1,
             'fl_oz': 29.5735,
+            'piece': 1,  // individual items (eggs, apples, etc.)
             'serving': 1  // placeholder, user defines the weight
         };
 
@@ -604,6 +613,7 @@
             'tsp': 'tsp',
             'ml': 'ml',
             'fl_oz': 'fl oz',
+            'piece': 'piece',
             'serving': 'serving'
         };
 
@@ -657,14 +667,24 @@
             const servingAmount = parseFloat(document.getElementById('servingAmount').value);
             const servingUnit = document.getElementById('servingUnit').value;
             
+            const protein = parseFloat(document.getElementById('protein').value);
+            const carbs = parseFloat(document.getElementById('carbs').value);
+            const fats = parseFloat(document.getElementById('fats').value);
+            
+            // Use custom calories if provided, otherwise auto-calculate
+            const caloriesInput = document.getElementById('calories').value;
+            const calories = caloriesInput ? parseFloat(caloriesInput) : (protein * 4 + carbs * 4 + fats * 9);
+            
             const foodData = {
                 name: document.getElementById('foodName').value,
                 servingAmount: servingAmount,
                 servingUnit: servingUnit,
-                protein: parseFloat(document.getElementById('protein').value),
-                carbs: parseFloat(document.getElementById('carbs').value),
-                fats: parseFloat(document.getElementById('fats').value),
-                fiber: fiberValue
+                protein: protein,
+                carbs: carbs,
+                fats: fats,
+                fiber: fiberValue,
+                calories: calories,
+                customCalories: !!caloriesInput // Track if user provided custom value
             };
 
             if (editingId) {
@@ -708,6 +728,13 @@
             document.getElementById('fats').value = food.fats;
             document.getElementById('fiber').value = food.fiber;
             
+            // Only populate calories if it was custom (not auto-calculated)
+            if (food.customCalories) {
+                document.getElementById('calories').value = food.calories;
+            } else {
+                document.getElementById('calories').value = '';
+            }
+            
             document.getElementById('submitFoodBtn').textContent = 'Update Food';
             document.getElementById('cancelEditBtn').style.display = 'block';
             
@@ -740,7 +767,8 @@
             }
 
             listDiv.innerHTML = foodDatabase.map(food => {
-                const calories = (food.protein * 4) + (food.carbs * 4) + (food.fats * 9);
+                // Use stored calories or calculate if not present (for legacy data)
+                const calories = food.calories !== undefined ? food.calories : (food.protein * 4 + food.carbs * 4 + food.fats * 9);
                 const servingLabel = `${food.servingAmount} ${UNIT_LABELS[food.servingUnit]}`;
                 return `
                     <div class="food-item">
@@ -832,7 +860,10 @@
                 const carbs = (item.carbs * multiplier).toFixed(1);
                 const fats = (item.fats * multiplier).toFixed(1);
                 const fiber = ((item.fiber || 0) * multiplier).toFixed(1);
-                const calories = ((item.protein * 4 + item.carbs * 4 + item.fats * 9) * multiplier).toFixed(0);
+                
+                // Use stored calories if available, otherwise calculate
+                const baseCalories = item.calories !== undefined ? item.calories : (item.protein * 4 + item.carbs * 4 + item.fats * 9);
+                const calories = (baseCalories * multiplier).toFixed(0);
 
                 return `
                     <div class="meal-item">
@@ -854,6 +885,7 @@
                                     <option value="tsp" ${item.unit === 'tsp' ? 'selected' : ''}>tsp</option>
                                     <option value="ml" ${item.unit === 'ml' ? 'selected' : ''}>ml</option>
                                     <option value="fl_oz" ${item.unit === 'fl_oz' ? 'selected' : ''}>fl oz</option>
+                                    <option value="piece" ${item.unit === 'piece' ? 'selected' : ''}>piece</option>
                                     <option value="serving" ${item.unit === 'serving' ? 'selected' : ''}>serving</option>
                                 </select>
                             </div>
@@ -1129,6 +1161,7 @@
                                         <option value="cup" ${unit === 'cup' ? 'selected' : ''}>cup</option>
                                         <option value="tbsp" ${unit === 'tbsp' ? 'selected' : ''}>tbsp</option>
                                         <option value="tsp" ${unit === 'tsp' ? 'selected' : ''}>tsp</option>
+                                        <option value="piece" ${unit === 'piece' ? 'selected' : ''}>piece</option>
                                     </select>
                                 </div>
                             </div>
