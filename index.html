@@ -4,6 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Macro Calculator</title>
+    
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+    
     <style>
         * {
             margin: 0;
@@ -373,6 +378,32 @@
     </style>
 </head>
 <body>
+    <!-- PIN Entry Overlay -->
+    <div id="pinOverlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 9999; align-items: center; justify-content: center;">
+        <div style="background: white; padding: 40px; border-radius: 16px; max-width: 400px; width: 90%; text-align: center; box-shadow: 0 20px 60px rgba(0,0,0,0.3);">
+            <h2 style="color: #2c5282; margin-bottom: 10px;">🔐 Enter Your PIN</h2>
+            <p style="color: #666; margin-bottom: 30px; font-size: 0.9rem;">4-digit PIN to sync your data across devices</p>
+            
+            <input type="tel" id="pinInput" maxlength="4" pattern="[0-9]*" 
+                style="width: 100%; padding: 20px; font-size: 2rem; text-align: center; border: 3px solid #2c5282; border-radius: 12px; letter-spacing: 10px; font-weight: bold;"
+                placeholder="----"
+                autocomplete="off">
+            
+            <div style="margin-top: 20px; display: flex; gap: 10px;">
+                <button onclick="submitPin()" style="flex: 1; background: linear-gradient(135deg, #2c5282 0%, #1e3a5f 100%); color: white; border: none; padding: 15px; border-radius: 8px; font-size: 1rem; font-weight: 600; cursor: pointer;">
+                    Unlock
+                </button>
+                <button onclick="changePin()" style="flex: 1; background: #6c757d; color: white; border: none; padding: 15px; border-radius: 8px; font-size: 1rem; font-weight: 600; cursor: pointer;">
+                    Change PIN
+                </button>
+            </div>
+            
+            <p style="margin-top: 20px; font-size: 0.85rem; color: #999;">
+                First time? Enter any 4-digit PIN to create your account.
+            </p>
+        </div>
+    </div>
+
     <div class="container">
         <h1>🍽️ Macro Calculator</h1>
 
@@ -565,6 +596,42 @@
 
         <!-- My Day Page -->
         <div id="dayPage" class="page">
+            <!-- Day Totals at Top -->
+            <div class="total-macros" style="margin-bottom: 20px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <h2 style="margin: 0;">Daily Totals</h2>
+                    <div style="display: flex; gap: 8px;">
+                        <button type="button" class="btn btn-danger" id="clearDayBtn" onclick="clearDay()" style="padding: 8px 16px; font-size: 0.9rem; width: auto;">Clear Day</button>
+                        <button type="button" class="btn btn-success" id="undoClearBtn" onclick="undoClear()" style="padding: 8px 16px; font-size: 0.9rem; width: auto; display: none;">Undo Clear</button>
+                    </div>
+                </div>
+                <div class="total-grid">
+                    <div class="total-item">
+                        <div class="total-label">PROTEIN</div>
+                        <div class="total-value" id="dayProtein">0</div>
+                        <div style="font-size: 0.9rem; opacity: 0.9; margin-top: 4px;" id="dayProteinPct">0%</div>
+                    </div>
+                    <div class="total-item">
+                        <div class="total-label">CARBS</div>
+                        <div class="total-value" id="dayCarbs">0</div>
+                        <div style="font-size: 0.9rem; opacity: 0.9; margin-top: 4px;" id="dayCarbsPct">0%</div>
+                    </div>
+                    <div class="total-item">
+                        <div class="total-label">FATS</div>
+                        <div class="total-value" id="dayFats">0</div>
+                        <div style="font-size: 0.9rem; opacity: 0.9; margin-top: 4px;" id="dayFatsPct">0%</div>
+                    </div>
+                    <div class="total-item">
+                        <div class="total-label">CALORIES</div>
+                        <div class="total-value" id="dayCalories">0</div>
+                        <div style="font-size: 0.9rem; opacity: 0.9; margin-top: 4px;">Total</div>
+                    </div>
+                </div>
+                <div style="margin-top: 20px; font-size: 1.2rem;">
+                    Fiber: <span id="dayFiber" style="font-weight: 700;">0</span>g
+                </div>
+            </div>
+
             <div class="card" style="margin-bottom: 20px;">
                 <h2>Add to Today</h2>
                 
@@ -640,40 +707,28 @@
                 <h2>Today's Meals</h2>
                 <div id="dayMealsList"></div>
             </div>
-
-            <!-- Day Totals -->
-            <div class="total-macros" style="margin-top: 20px;">
-                <h2>Daily Totals</h2>
-                <div class="total-grid">
-                    <div class="total-item">
-                        <div class="total-label">PROTEIN</div>
-                        <div class="total-value" id="dayProtein">0</div>
-                        <div style="font-size: 0.9rem; opacity: 0.9; margin-top: 4px;" id="dayProteinPct">0%</div>
-                    </div>
-                    <div class="total-item">
-                        <div class="total-label">CARBS</div>
-                        <div class="total-value" id="dayCarbs">0</div>
-                        <div style="font-size: 0.9rem; opacity: 0.9; margin-top: 4px;" id="dayCarbsPct">0%</div>
-                    </div>
-                    <div class="total-item">
-                        <div class="total-label">FATS</div>
-                        <div class="total-value" id="dayFats">0</div>
-                        <div style="font-size: 0.9rem; opacity: 0.9; margin-top: 4px;" id="dayFatsPct">0%</div>
-                    </div>
-                    <div class="total-item">
-                        <div class="total-label">CALORIES</div>
-                        <div class="total-value" id="dayCalories">0</div>
-                        <div style="font-size: 0.9rem; opacity: 0.9; margin-top: 4px;">Total</div>
-                    </div>
-                </div>
-                <div style="margin-top: 20px; font-size: 1.2rem;">
-                    Fiber: <span id="dayFiber" style="font-weight: 700;">0</span>g
-                </div>
-            </div>
         </div>
     </div>
 
     <script>
+        // Firebase Configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyBYGJvIXh281SPNkBfRO2coTHnIJjE_Qqw",
+            authDomain: "macro-calculator-a65ef.firebaseapp.com",
+            databaseURL: "https://macro-calculator-a65ef-default-rtdb.firebaseio.com",
+            projectId: "macro-calculator-a65ef",
+            storageBucket: "macro-calculator-a65ef.firebasestorage.app",
+            messagingSenderId: "817648356788",
+            appId: "1:817648356788:web:6dd31d588129d9d54a76e1",
+            measurementId: "G-NKH4TTLDT2"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+        let userPin = localStorage.getItem('userPin') || null;
+        let firebaseRef = null;
+
         // Unit conversion constants (to grams or ml)
         const UNIT_CONVERSIONS = {
             'g': 1,
@@ -706,9 +761,142 @@
         let savedMeals = JSON.parse(localStorage.getItem('savedMeals')) || [];
         let currentMealBuilder = [];
         let todaysMeals = JSON.parse(localStorage.getItem('todaysMeals')) || [];
+        let clearedMealsBackup = null; // For undo functionality
+
+        // PIN and Firebase Sync Functions
+        function showPinOverlay() {
+            document.getElementById('pinOverlay').style.display = 'flex';
+            document.getElementById('pinInput').focus();
+        }
+
+        function hidePinOverlay() {
+            document.getElementById('pinOverlay').style.display = 'none';
+        }
+
+        function submitPin() {
+            const pin = document.getElementById('pinInput').value.trim();
+            
+            if (pin.length !== 4 || !/^\d{4}$/.test(pin)) {
+                alert('Please enter a valid 4-digit PIN');
+                return;
+            }
+
+            userPin = pin;
+            localStorage.setItem('userPin', userPin);
+            
+            // Connect to Firebase with this PIN
+            connectToFirebase();
+            hidePinOverlay();
+        }
+
+        function changePin() {
+            if (confirm('Change PIN? This will disconnect you from your current data.')) {
+                localStorage.removeItem('userPin');
+                userPin = null;
+                if (firebaseRef) {
+                    firebaseRef.off(); // Disconnect listeners
+                }
+                document.getElementById('pinInput').value = '';
+                document.getElementById('pinInput').focus();
+            }
+        }
+
+        function connectToFirebase() {
+            if (!userPin) return;
+
+            // Reference to this user's data in Firebase
+            firebaseRef = database.ref(userPin);
+
+            // Load data from Firebase
+            firebaseRef.once('value', (snapshot) => {
+                const data = snapshot.val();
+                
+                if (data) {
+                    // Data exists in cloud - load it
+                    if (data.foodDatabase) {
+                        foodDatabase = data.foodDatabase;
+                        localStorage.setItem('foodDatabase', JSON.stringify(foodDatabase));
+                    }
+                    if (data.savedMeals) {
+                        savedMeals = data.savedMeals;
+                        localStorage.setItem('savedMeals', JSON.stringify(savedMeals));
+                    }
+                    if (data.todaysMeals) {
+                        todaysMeals = data.todaysMeals;
+                        localStorage.setItem('todaysMeals', JSON.stringify(todaysMeals));
+                    }
+                    
+                    // Refresh UI
+                    renderFoodList();
+                    updateFoodSelectors();
+                    renderSavedMeals();
+                    updateMealSelector();
+                    renderDayMeals();
+                    
+                    console.log('✅ Data loaded from cloud');
+                } else {
+                    // No data in cloud - upload local data
+                    syncToFirebase();
+                    console.log('✅ Local data uploaded to cloud');
+                }
+            });
+
+            // Listen for changes from other devices
+            firebaseRef.on('value', (snapshot) => {
+                const data = snapshot.val();
+                if (data && data._lastSync) {
+                    const localLastSync = parseInt(localStorage.getItem('lastSync') || '0');
+                    if (data._lastSync > localLastSync) {
+                        // Remote data is newer - update local
+                        if (data.foodDatabase) {
+                            foodDatabase = data.foodDatabase;
+                            localStorage.setItem('foodDatabase', JSON.stringify(foodDatabase));
+                            renderFoodList();
+                            updateFoodSelectors();
+                        }
+                        if (data.savedMeals) {
+                            savedMeals = data.savedMeals;
+                            localStorage.setItem('savedMeals', JSON.stringify(savedMeals));
+                            renderSavedMeals();
+                            updateMealSelector();
+                        }
+                        if (data.todaysMeals) {
+                            todaysMeals = data.todaysMeals;
+                            localStorage.setItem('todaysMeals', JSON.stringify(todaysMeals));
+                            renderDayMeals();
+                        }
+                        localStorage.setItem('lastSync', data._lastSync.toString());
+                    }
+                }
+            });
+        }
+
+        function syncToFirebase() {
+            if (!userPin || !firebaseRef) return;
+
+            const timestamp = Date.now();
+            
+            firebaseRef.set({
+                foodDatabase: foodDatabase,
+                savedMeals: savedMeals,
+                todaysMeals: todaysMeals,
+                _lastSync: timestamp
+            }).then(() => {
+                localStorage.setItem('lastSync', timestamp.toString());
+            }).catch((error) => {
+                console.error('Sync error:', error);
+            });
+        }
 
         // Initialize
         document.addEventListener('DOMContentLoaded', function() {
+            // Check if user has a PIN
+            if (!userPin) {
+                showPinOverlay();
+            } else {
+                connectToFirebase();
+            }
+
             renderFoodList();
             updateFoodSelectors();
             renderSavedMeals();
@@ -725,6 +913,13 @@
             
             // Update food selector for day page
             updateDayFoodSelector();
+            
+            // PIN input - submit on Enter key
+            document.getElementById('pinInput').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    submitPin();
+                }
+            });
         });
 
         function showPage(pageName) {
@@ -800,6 +995,7 @@
             
             renderFoodList();
             updateFoodSelectors();
+            syncToFirebase(); // Sync to cloud
             e.target.reset();
         }
 
@@ -843,6 +1039,7 @@
                 localStorage.setItem('foodDatabase', JSON.stringify(foodDatabase));
                 renderFoodList();
                 updateFoodSelectors();
+                syncToFirebase(); // Sync to cloud
             }
         }
 
@@ -1154,6 +1351,7 @@
             cancelMealEdit();
             renderSavedMeals();
             updateMealSelector();
+            syncToFirebase(); // Sync to cloud
         }
 
         function deleteMeal(id) {
@@ -1162,6 +1360,7 @@
                 localStorage.setItem('savedMeals', JSON.stringify(savedMeals));
                 renderSavedMeals();
                 updateMealSelector();
+                syncToFirebase(); // Sync to cloud
             }
         }
 
@@ -1173,33 +1372,54 @@
                 return;
             }
 
-            listDiv.innerHTML = savedMeals.map(meal => {
-                const calories = (meal.perServing.protein * 4) + (meal.perServing.carbs * 4) + (meal.perServing.fats * 9);
-                return `
-                    <div class="saved-meal-item">
-                        <div class="saved-meal-header">
-                            <span class="saved-meal-name">${meal.name}</span>
-                            <div style="display: flex; gap: 8px;">
-                                <button class="btn btn-success" onclick="editMeal(${meal.id})">Edit</button>
-                                <button class="btn btn-danger" onclick="deleteMeal(${meal.id})">Delete</button>
-                            </div>
-                        </div>
-                        <div style="font-size: 0.9rem; color: #666; margin-bottom: 10px;">
-                            Makes ${meal.totalServings} serving${meal.totalServings > 1 ? 's' : ''}
-                        </div>
-                        <div class="meal-stats">
-                            <div style="font-weight: 600; margin-bottom: 8px;">Per Serving:</div>
-                            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; font-size: 0.9rem;">
-                                <div><strong>Protein:</strong> ${meal.perServing.protein.toFixed(1)}g</div>
-                                <div><strong>Carbs:</strong> ${meal.perServing.carbs.toFixed(1)}g</div>
-                                <div><strong>Fats:</strong> ${meal.perServing.fats.toFixed(1)}g</div>
-                                <div><strong>Fiber:</strong> ${meal.perServing.fiber.toFixed(1)}g</div>
-                                <div style="grid-column: 1 / -1;"><strong>Calories:</strong> ${calories.toFixed(0)}</div>
-                            </div>
-                        </div>
-                    </div>
+            // Sort alphabetically by name
+            const sortedMeals = [...savedMeals].sort((a, b) => a.name.localeCompare(b.name));
+
+            // Create table
+            let tableHTML = `
+                <table style="width: 100%; border-collapse: collapse; font-size: 0.9rem;">
+                    <thead>
+                        <tr style="background: #2c5282; color: white;">
+                            <th style="padding: 8px; text-align: left; border-radius: 8px 0 0 0;">Meal Name</th>
+                            <th style="padding: 8px; text-align: center;">Servings</th>
+                            <th style="padding: 8px; text-align: center;">P/srv</th>
+                            <th style="padding: 8px; text-align: center;">C/srv</th>
+                            <th style="padding: 8px; text-align: center;">F/srv</th>
+                            <th style="padding: 8px; text-align: center;">Fiber/srv</th>
+                            <th style="padding: 8px; text-align: center;">Cal/srv</th>
+                            <th style="padding: 8px; text-align: center; border-radius: 0 8px 0 0;"></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+
+            sortedMeals.forEach((meal, index) => {
+                const calories = meal.perServing.calories || (meal.perServing.protein * 4 + meal.perServing.carbs * 4 + meal.perServing.fats * 9);
+                const rowBg = index % 2 === 0 ? 'white' : '#f8f9fa';
+
+                tableHTML += `
+                    <tr style="background: ${rowBg}; border-bottom: 1px solid #e0e0e0;">
+                        <td style="padding: 8px; font-weight: 600; color: #333;">${meal.name}</td>
+                        <td style="padding: 8px; text-align: center; color: #666;">${meal.totalServings}</td>
+                        <td style="padding: 8px; text-align: center; color: #3b82f6; font-weight: 600;">${meal.perServing.protein.toFixed(1)}g</td>
+                        <td style="padding: 8px; text-align: center; color: #f59e0b; font-weight: 600;">${meal.perServing.carbs.toFixed(1)}g</td>
+                        <td style="padding: 8px; text-align: center; color: #10b981; font-weight: 600;">${meal.perServing.fats.toFixed(1)}g</td>
+                        <td style="padding: 8px; text-align: center; color: #666;">${meal.perServing.fiber.toFixed(1)}g</td>
+                        <td style="padding: 8px; text-align: center; font-weight: 700;">${calories.toFixed(0)}</td>
+                        <td style="padding: 8px; text-align: center;">
+                            <button class="btn btn-success" onclick="editMeal(${meal.id})" style="padding: 4px 8px; font-size: 0.8rem; margin-right: 4px;">Edit</button>
+                            <button class="btn btn-danger" onclick="deleteMeal(${meal.id})" style="padding: 4px 8px; font-size: 0.8rem;">Del</button>
+                        </td>
+                    </tr>
                 `;
-            }).join('');
+            });
+
+            tableHTML += `
+                    </tbody>
+                </table>
+            `;
+
+            listDiv.innerHTML = tableHTML;
         }
 
         function updateMealSelector() {
@@ -1315,6 +1535,7 @@
             localStorage.setItem('todaysMeals', JSON.stringify(todaysMeals));
             renderDayMeals();
             calculateDayTotals();
+            syncToFirebase(); // Sync to cloud
             
             // Reset inputs
             document.getElementById('selectFoodForDay').value = '';
@@ -1346,6 +1567,7 @@
             localStorage.setItem('todaysMeals', JSON.stringify(todaysMeals));
             renderDayMeals();
             calculateDayTotals();
+            syncToFirebase(); // Sync to cloud
             
             // Reset inputs
             document.getElementById('selectMealForDay').value = '';
@@ -1357,6 +1579,7 @@
             localStorage.setItem('todaysMeals', JSON.stringify(todaysMeals));
             renderDayMeals();
             calculateDayTotals();
+            syncToFirebase(); // Sync to cloud
         }
 
         function updateDayMealAmount(id, amount) {
@@ -1366,6 +1589,7 @@
                 localStorage.setItem('todaysMeals', JSON.stringify(todaysMeals));
                 renderDayMeals();
                 calculateDayTotals();
+                syncToFirebase(); // Sync to cloud
             }
         }
 
@@ -1376,6 +1600,7 @@
                 localStorage.setItem('todaysMeals', JSON.stringify(todaysMeals));
                 renderDayMeals();
                 calculateDayTotals();
+                syncToFirebase(); // Sync to cloud
             }
         }
 
@@ -1678,6 +1903,7 @@
                     localStorage.setItem('foodDatabase', JSON.stringify(foodDatabase));
                     renderFoodList();
                     updateFoodSelectors();
+                    syncToFirebase(); // Sync to cloud
                     
                     alert(`Successfully imported ${foods.length} foods!`);
                     
@@ -1690,6 +1916,49 @@
             };
             
             reader.readAsText(file);
+        }
+
+        // Clear day functionality
+        function clearDay() {
+            if (todaysMeals.length === 0) {
+                return; // Nothing to clear
+            }
+
+            if (confirm('Clear all meals from today? You can undo this action.')) {
+                // Backup current meals for undo
+                clearedMealsBackup = JSON.parse(JSON.stringify(todaysMeals));
+                
+                // Clear the day
+                todaysMeals = [];
+                localStorage.setItem('todaysMeals', JSON.stringify(todaysMeals));
+                syncToFirebase(); // Sync to cloud
+                
+                // Show undo button
+                document.getElementById('undoClearBtn').style.display = 'block';
+                
+                // Hide undo button after 10 seconds
+                setTimeout(() => {
+                    document.getElementById('undoClearBtn').style.display = 'none';
+                    clearedMealsBackup = null;
+                }, 10000);
+                
+                renderDayMeals();
+                calculateDayTotals();
+            }
+        }
+
+        function undoClear() {
+            if (clearedMealsBackup) {
+                todaysMeals = JSON.parse(JSON.stringify(clearedMealsBackup));
+                localStorage.setItem('todaysMeals', JSON.stringify(todaysMeals));
+                syncToFirebase(); // Sync to cloud
+                
+                clearedMealsBackup = null;
+                document.getElementById('undoClearBtn').style.display = 'none';
+                
+                renderDayMeals();
+                calculateDayTotals();
+            }
         }
     </script>
 </body>
