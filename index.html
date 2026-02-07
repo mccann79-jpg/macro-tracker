@@ -487,6 +487,7 @@
                                 <th style="padding: 10px; text-align: center; width: 80px;">Fats</th>
                                 <th style="padding: 10px; text-align: center; width: 80px;">Fiber</th>
                                 <th style="padding: 10px; text-align: center; width: 80px;">Calories</th>
+                                <th style="padding: 10px; text-align: center; width: 80px;">P/Cal</th>
                                 <th style="padding: 10px; text-align: center; border-radius: 0 8px 0 0; width: 60px;"></th>
                             </tr>
                         </thead>
@@ -501,6 +502,7 @@
                                 <td style="padding: 12px; text-align: center; font-weight: 700; color: #43e97b; font-size: 1.1rem;" id="totalFatsTable">0g</td>
                                 <td style="padding: 12px; text-align: center; font-weight: 700; color: #666; font-size: 1.1rem;" id="totalFiberTable">0g</td>
                                 <td style="padding: 12px; text-align: center; font-weight: 700; color: #333; font-size: 1.1rem;" id="totalCaloriesTable">0</td>
+                                <td style="padding: 12px; text-align: center; font-weight: 700; color: #333; font-size: 1.1rem;" id="totalPCalTable">0</td>
                                 <td></td>
                             </tr>
                             <tr style="background: #e8ebf7; border-top: 2px solid #667eea;">
@@ -510,6 +512,7 @@
                                 <td style="padding: 12px; text-align: center; font-weight: 700; color: #43e97b;" id="perServingFatsTable">0g</td>
                                 <td style="padding: 12px; text-align: center; font-weight: 700; color: #666;" id="perServingFiberTable">0g</td>
                                 <td style="padding: 12px; text-align: center; font-weight: 700; color: #333;" id="perServingCaloriesTable">0</td>
+                                <td style="padding: 12px; text-align: center; font-weight: 700; color: #333;" id="perServingPCalTable">0</td>
                                 <td></td>
                             </tr>
                         </tfoot>
@@ -521,9 +524,9 @@
                     <div style="display: grid; grid-template-columns: 3fr 1fr; gap: 10px;">
                         <div class="form-group" style="margin-bottom: 0;">
                             <label for="selectFoodForMeal">Add Food to Meal</label>
-                            <select id="selectFoodForMeal">
-                                <option value="">Choose a food...</option>
-                            </select>
+                            <input type="text" id="selectFoodForMeal" list="foodListMeal" placeholder="Search or select a food..." 
+                                style="width: 100%; padding: 10px 12px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 1rem;">
+                            <datalist id="foodListMeal"></datalist>
                         </div>
                         <div style="display: flex; align-items: flex-end;">
                             <button type="button" class="btn" id="addToMealBuilder" style="width: 100%;">+ Add</button>
@@ -561,9 +564,9 @@
                 <div id="mealSelectSection">
                     <div class="form-group">
                         <label for="selectMealForDay">Select Saved Meal</label>
-                        <select id="selectMealForDay">
-                            <option value="">Choose a meal...</option>
-                        </select>
+                        <input type="text" id="selectMealForDay" list="mealListDay" placeholder="Search or select a meal..." 
+                            style="width: 100%; padding: 10px 12px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 1rem;">
+                        <datalist id="mealListDay"></datalist>
                     </div>
 
                     <div class="form-group">
@@ -590,9 +593,9 @@
                 <div id="foodSelectSection" style="display: none;">
                     <div class="form-group">
                         <label for="selectFoodForDay">Select Food</label>
-                        <select id="selectFoodForDay">
-                            <option value="">Choose a food...</option>
-                        </select>
+                        <input type="text" id="selectFoodForDay" list="foodListDay" placeholder="Search or select a food..." 
+                            style="width: 100%; padding: 10px 12px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 1rem;">
+                        <datalist id="foodListDay"></datalist>
                     </div>
 
                     <div class="form-group">
@@ -630,18 +633,22 @@
                     <div class="total-item">
                         <div class="total-label">PROTEIN</div>
                         <div class="total-value" id="dayProtein">0</div>
+                        <div style="font-size: 0.9rem; opacity: 0.9; margin-top: 4px;" id="dayProteinPct">0%</div>
                     </div>
                     <div class="total-item">
                         <div class="total-label">CARBS</div>
                         <div class="total-value" id="dayCarbs">0</div>
+                        <div style="font-size: 0.9rem; opacity: 0.9; margin-top: 4px;" id="dayCarbsPct">0%</div>
                     </div>
                     <div class="total-item">
                         <div class="total-label">FATS</div>
                         <div class="total-value" id="dayFats">0</div>
+                        <div style="font-size: 0.9rem; opacity: 0.9; margin-top: 4px;" id="dayFatsPct">0%</div>
                     </div>
                     <div class="total-item">
                         <div class="total-label">CALORIES</div>
                         <div class="total-value" id="dayCalories">0</div>
+                        <div style="font-size: 0.9rem; opacity: 0.9; margin-top: 4px;">Total</div>
                     </div>
                 </div>
                 <div style="margin-top: 20px; font-size: 1.2rem;">
@@ -863,23 +870,25 @@
         }
 
         function updateFoodSelectors() {
-            const select = document.getElementById('selectFoodForMeal');
-            select.innerHTML = '<option value="">Choose a food...</option>' +
-                foodDatabase.map(food => 
-                    `<option value="${food.id}">${food.name}</option>`
-                ).join('');
+            // Sort foods alphabetically by name
+            const sortedFoods = [...foodDatabase].sort((a, b) => a.name.localeCompare(b.name));
+            
+            const datalist = document.getElementById('foodListMeal');
+            datalist.innerHTML = sortedFoods.map(food => 
+                `<option value="${food.name}" data-id="${food.id}">${food.name}</option>`
+            ).join('');
             
             // Also update day page selector
             updateDayFoodSelector();
         }
 
         function addFoodToMealBuilder() {
-            const selectedId = parseInt(document.getElementById('selectFoodForMeal').value);
-            if (!selectedId) {
+            const foodName = document.getElementById('selectFoodForMeal').value.trim();
+            if (!foodName) {
                 return; // Silent fail if no food selected
             }
 
-            const food = foodDatabase.find(f => f.id === selectedId);
+            const food = foodDatabase.find(f => f.name === foodName);
             if (!food) return;
 
             currentMealBuilder.push({
@@ -892,7 +901,7 @@
             renderMealBuilder();
             calculateMealTotals();
             
-            // Reset the dropdown
+            // Reset the input
             document.getElementById('selectFoodForMeal').value = '';
         }
 
@@ -935,6 +944,9 @@
                 // Use stored calories if available, otherwise calculate
                 const baseCalories = item.calories !== undefined ? item.calories : (item.protein * 4 + item.carbs * 4 + item.fats * 9);
                 const calories = (baseCalories * multiplier).toFixed(0);
+                
+                // Calculate P/Cal ratio: (protein * 10) / calories
+                const pCalRatio = calories > 0 ? ((parseFloat(protein) * 10) / parseFloat(calories)).toFixed(1) : 0;
 
                 const rowBg = index % 2 === 0 ? 'white' : '#f8f9fa';
 
@@ -966,6 +978,7 @@
                         <td style="padding: 10px; text-align: center; font-weight: 600; color: #43e97b;">${fats}g</td>
                         <td style="padding: 10px; text-align: center; color: #666;">${fiber}g</td>
                         <td style="padding: 10px; text-align: center; font-weight: 700;">${calories}</td>
+                        <td style="padding: 10px; text-align: center; font-weight: 600; color: #764ba2;">${pCalRatio}</td>
                         <td style="padding: 10px; text-align: center;">
                             <button onclick="removeFoodFromBuilder(${item.builderId})" 
                                 style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-weight: 600;">✕</button>
@@ -1004,18 +1017,24 @@
             const perServingFiber = totalFiber / totalServings;
             const perServingCalories = totalCalories / totalServings;
 
+            // Calculate P/Cal ratios
+            const totalPCal = totalCalories > 0 ? ((totalProtein * 10) / totalCalories).toFixed(1) : 0;
+            const perServingPCal = perServingCalories > 0 ? ((perServingProtein * 10) / perServingCalories).toFixed(1) : 0;
+
             // Update table totals
             document.getElementById('totalProteinTable').textContent = totalProtein.toFixed(1) + 'g';
             document.getElementById('totalCarbsTable').textContent = totalCarbs.toFixed(1) + 'g';
             document.getElementById('totalFatsTable').textContent = totalFats.toFixed(1) + 'g';
             document.getElementById('totalFiberTable').textContent = totalFiber.toFixed(1) + 'g';
             document.getElementById('totalCaloriesTable').textContent = totalCalories.toFixed(0);
+            document.getElementById('totalPCalTable').textContent = totalPCal;
 
             document.getElementById('perServingProteinTable').textContent = perServingProtein.toFixed(1) + 'g';
             document.getElementById('perServingCarbsTable').textContent = perServingCarbs.toFixed(1) + 'g';
             document.getElementById('perServingFatsTable').textContent = perServingFats.toFixed(1) + 'g';
             document.getElementById('perServingFiberTable').textContent = perServingFiber.toFixed(1) + 'g';
             document.getElementById('perServingCaloriesTable').textContent = perServingCalories.toFixed(0);
+            document.getElementById('perServingPCalTable').textContent = perServingPCal;
         }
 
         function saveMeal() {
@@ -1134,19 +1153,23 @@
         }
 
         function updateMealSelector() {
-            const select = document.getElementById('selectMealForDay');
-            select.innerHTML = '<option value="">Choose a meal...</option>' +
-                savedMeals.map(meal => 
-                    `<option value="${meal.id}">${meal.name}</option>`
-                ).join('');
+            // Sort meals alphabetically by name
+            const sortedMeals = [...savedMeals].sort((a, b) => a.name.localeCompare(b.name));
+            
+            const datalist = document.getElementById('mealListDay');
+            datalist.innerHTML = sortedMeals.map(meal => 
+                `<option value="${meal.name}" data-id="${meal.id}">${meal.name}</option>`
+            ).join('');
         }
 
         function updateDayFoodSelector() {
-            const select = document.getElementById('selectFoodForDay');
-            select.innerHTML = '<option value="">Choose a food...</option>' +
-                foodDatabase.map(food => 
-                    `<option value="${food.id}">${food.name}</option>`
-                ).join('');
+            // Sort foods alphabetically by name
+            const sortedFoods = [...foodDatabase].sort((a, b) => a.name.localeCompare(b.name));
+            
+            const datalist = document.getElementById('foodListDay');
+            datalist.innerHTML = sortedFoods.map(food => 
+                `<option value="${food.name}" data-id="${food.id}">${food.name}</option>`
+            ).join('');
         }
 
         function setDayAddType(type) {
@@ -1208,12 +1231,12 @@
         }
 
         function addFoodToDay() {
-            const selectedId = parseInt(document.getElementById('selectFoodForDay').value);
-            if (!selectedId) {
+            const foodName = document.getElementById('selectFoodForDay').value.trim();
+            if (!foodName) {
                 return; // Silent fail
             }
 
-            const food = foodDatabase.find(f => f.id === selectedId);
+            const food = foodDatabase.find(f => f.name === foodName);
             if (!food) return;
 
             const amount = parseFloat(document.getElementById('foodAmountForDay').value) || 1;
@@ -1249,12 +1272,12 @@
         }
 
         function addMealToDay() {
-            const selectedId = parseInt(document.getElementById('selectMealForDay').value);
-            if (!selectedId) {
+            const mealName = document.getElementById('selectMealForDay').value.trim();
+            if (!mealName) {
                 return; // Silent fail
             }
 
-            const meal = savedMeals.find(m => m.id === selectedId);
+            const meal = savedMeals.find(m => m.name === mealName);
             if (!meal) return;
 
             const amount = parseFloat(document.getElementById('mealServingsForDay').value) || 1;
@@ -1437,11 +1460,21 @@
                 }
             });
 
+            // Calculate percentages of calories from each macro
+            const proteinPct = totalCalories > 0 ? ((totalProtein * 4 / totalCalories) * 100).toFixed(0) : 0;
+            const carbsPct = totalCalories > 0 ? ((totalCarbs * 4 / totalCalories) * 100).toFixed(0) : 0;
+            const fatsPct = totalCalories > 0 ? ((totalFats * 9 / totalCalories) * 100).toFixed(0) : 0;
+
             document.getElementById('dayProtein').textContent = totalProtein.toFixed(1);
             document.getElementById('dayCarbs').textContent = totalCarbs.toFixed(1);
             document.getElementById('dayFats').textContent = totalFats.toFixed(1);
             document.getElementById('dayCalories').textContent = totalCalories.toFixed(0);
             document.getElementById('dayFiber').textContent = totalFiber.toFixed(1);
+            
+            // Update percentages
+            document.getElementById('dayProteinPct').textContent = proteinPct + '%';
+            document.getElementById('dayCarbsPct').textContent = carbsPct + '%';
+            document.getElementById('dayFatsPct').textContent = fatsPct + '%';
         }
     </script>
 </body>
