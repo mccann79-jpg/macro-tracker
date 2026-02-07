@@ -1,0 +1,1200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Macro Calculator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+            font-size: 2.5rem;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .navigation {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+            background: white;
+            padding: 10px;
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .nav-btn {
+            flex: 1;
+            background: #f8f9fa;
+            border: none;
+            padding: 15px 20px;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            color: #666;
+        }
+
+        .nav-btn:hover {
+            background: #e9ecef;
+        }
+
+        .nav-btn.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .page {
+            display: none;
+        }
+
+        .page.active {
+            display: block;
+        }
+
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .card h2 {
+            color: #667eea;
+            margin-bottom: 20px;
+            font-size: 1.5rem;
+            border-bottom: 3px solid #667eea;
+            padding-bottom: 10px;
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 10px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 6px;
+            color: #333;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        input[type="text"],
+        input[type="number"],
+        select {
+            width: 100%;
+            padding: 10px 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.3s;
+        }
+
+        input:focus,
+        select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            width: 100%;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            padding: 6px 12px;
+            font-size: 0.85rem;
+            width: auto;
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+            padding: 8px 16px;
+            font-size: 0.9rem;
+            width: auto;
+        }
+
+        .food-list {
+            margin-top: 20px;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        .food-item {
+            background: #f8f9fa;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            border-left: 4px solid #667eea;
+        }
+
+        .food-item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .food-name {
+            font-weight: 600;
+            color: #333;
+            font-size: 1rem;
+        }
+
+        .food-macros {
+            font-size: 0.85rem;
+            color: #666;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-top: 8px;
+        }
+
+        .meal-item {
+            background: white;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            padding: 16px;
+            margin-bottom: 12px;
+        }
+
+        .meal-item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .meal-food-name {
+            font-weight: 700;
+            color: #667eea;
+            font-size: 1.1rem;
+        }
+
+        .portion-controls {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+
+        .portion-input {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .portion-input input {
+            flex: 1;
+        }
+
+        .portion-input select {
+            flex: 1;
+        }
+
+        .macro-display {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            padding: 12px;
+            border-radius: 8px;
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            text-align: center;
+        }
+
+        .macro-item {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .macro-label {
+            font-size: 0.75rem;
+            color: #666;
+            font-weight: 600;
+            text-transform: uppercase;
+            margin-bottom: 4px;
+        }
+
+        .macro-value {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #333;
+        }
+
+        .total-macros {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 24px;
+            border-radius: 16px;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .total-macros h2 {
+            color: white;
+            border: none;
+            margin-bottom: 20px;
+        }
+
+        .total-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+        }
+
+        .total-item {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .total-label {
+            font-size: 0.9rem;
+            opacity: 0.9;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        .total-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: #999;
+        }
+
+        .saved-meal-item {
+            background: white;
+            border: 2px solid #667eea;
+            border-radius: 10px;
+            padding: 16px;
+            margin-bottom: 12px;
+        }
+
+        .saved-meal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .saved-meal-name {
+            font-weight: 700;
+            color: #667eea;
+            font-size: 1.2rem;
+        }
+
+        .meal-stats {
+            background: #f8f9fa;
+            padding: 12px;
+            border-radius: 8px;
+            margin-top: 10px;
+        }
+
+        .day-meal-item {
+            background: white;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            padding: 16px;
+            margin-bottom: 12px;
+        }
+
+        @media (max-width: 768px) {
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .total-grid,
+            .macro-display {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            h1 {
+                font-size: 2rem;
+            }
+
+            .navigation {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🍽️ Macro Calculator</h1>
+
+        <!-- Navigation -->
+        <div class="navigation">
+            <button class="nav-btn active" onclick="showPage('database')">Food Database</button>
+            <button class="nav-btn" onclick="showPage('meals')">Create Meal</button>
+            <button class="nav-btn" onclick="showPage('day')">My Day</button>
+        </div>
+
+        <!-- Food Database Page -->
+        <div id="databasePage" class="page active">
+            <div class="main-grid">
+                <!-- Add Food Section -->
+                <div class="card">
+                    <h2>Add Food</h2>
+                    <form id="addFoodForm">
+                        <input type="hidden" id="editingFoodId" value="">
+                        
+                        <div class="form-group">
+                            <label for="foodName">Food Name</label>
+                            <input type="text" id="foodName" required placeholder="e.g., Chicken Breast">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Serving Size</label>
+                            <div class="form-row">
+                                <input type="number" id="servingAmount" step="0.1" required min="0.1" placeholder="1">
+                                <select id="servingUnit" required>
+                                    <option value="g">grams (g)</option>
+                                    <option value="oz">ounces (oz)</option>
+                                    <option value="lb">pounds (lb)</option>
+                                    <option value="cup">cup</option>
+                                    <option value="tbsp">tablespoon</option>
+                                    <option value="tsp">teaspoon</option>
+                                    <option value="ml">milliliters (ml)</option>
+                                    <option value="fl_oz">fluid oz</option>
+                                    <option value="serving">serving</option>
+                                </select>
+                            </div>
+                            <small style="color: #666; font-size: 0.85rem;">Nutrition facts will be per this serving size</small>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="protein">Protein (g)</label>
+                            <input type="number" id="protein" step="0.1" required min="0">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="carbs">Carbs (g)</label>
+                            <input type="number" id="carbs" step="0.1" required min="0">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="fats">Fats (g)</label>
+                            <input type="number" id="fats" step="0.1" required min="0">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="fiber">Fiber (g) <span style="font-weight: normal; color: #999;">(optional)</span></label>
+                            <input type="number" id="fiber" step="0.1" min="0" value="0">
+                        </div>
+
+                        <button type="submit" class="btn" id="submitFoodBtn">Add to Database</button>
+                        <button type="button" class="btn" id="cancelEditBtn" style="display: none; margin-top: 10px; background: #6c757d;" onclick="cancelEdit()">Cancel Edit</button>
+                    </form>
+                </div>
+
+                <!-- Food List Section -->
+                <div class="card">
+                    <h2>My Foods</h2>
+                    <div class="food-list" id="foodList"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Create Meal Page -->
+        <div id="mealsPage" class="page">
+            <div class="main-grid">
+                <!-- Create Meal Section -->
+                <div class="card">
+                    <h2>Build Your Meal</h2>
+                    
+                    <div class="form-group">
+                        <label for="mealName">Meal Name</label>
+                        <input type="text" id="mealName" placeholder="e.g., Breakfast Bowl">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="totalServings">Total Servings</label>
+                        <input type="number" id="totalServings" min="1" step="1" value="1" placeholder="How many servings does this make?">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="selectFoodForMeal">Select Food</label>
+                        <select id="selectFoodForMeal">
+                            <option value="">Choose a food...</option>
+                        </select>
+                    </div>
+
+                    <button type="button" class="btn" id="addToMealBuilder">Add to Meal</button>
+
+                    <div id="mealBuilderItems" style="margin-top: 20px;"></div>
+
+                    <div style="margin-top: 20px;">
+                        <button type="button" class="btn" id="saveMealBtn">Save Meal</button>
+                    </div>
+                </div>
+
+                <!-- Saved Meals Section -->
+                <div class="card">
+                    <h2>Saved Meals</h2>
+                    <div id="savedMealsList"></div>
+                </div>
+            </div>
+
+            <!-- Meal Totals -->
+            <div class="total-macros" style="margin-top: 20px;">
+                <h2>Meal Totals (Per Serving)</h2>
+                <div class="total-grid">
+                    <div class="total-item">
+                        <div class="total-label">PROTEIN</div>
+                        <div class="total-value" id="mealProtein">0</div>
+                    </div>
+                    <div class="total-item">
+                        <div class="total-label">CARBS</div>
+                        <div class="total-value" id="mealCarbs">0</div>
+                    </div>
+                    <div class="total-item">
+                        <div class="total-label">FATS</div>
+                        <div class="total-value" id="mealFats">0</div>
+                    </div>
+                    <div class="total-item">
+                        <div class="total-label">CALORIES</div>
+                        <div class="total-value" id="mealCalories">0</div>
+                    </div>
+                </div>
+                <div style="margin-top: 20px; font-size: 1.2rem;">
+                    Fiber: <span id="mealFiber" style="font-weight: 700;">0</span>g
+                </div>
+            </div>
+        </div>
+
+        <!-- My Day Page -->
+        <div id="dayPage" class="page">
+            <div class="card" style="margin-bottom: 20px;">
+                <h2>Add to Today</h2>
+                
+                <div class="form-group">
+                    <label for="selectMealForDay">Select Saved Meal</label>
+                    <select id="selectMealForDay">
+                        <option value="">Choose a meal...</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Amount</label>
+                    <div class="form-row">
+                        <input type="number" id="mealServingsForDay" min="0.1" step="0.1" value="1">
+                        <select id="mealUnitForDay">
+                            <option value="serving">servings</option>
+                            <option value="g">grams (g)</option>
+                            <option value="oz">ounces (oz)</option>
+                            <option value="lb">pounds (lb)</option>
+                            <option value="cup">cups</option>
+                            <option value="tbsp">tablespoons</option>
+                            <option value="tsp">teaspoons</option>
+                        </select>
+                    </div>
+                    <small style="color: #666; font-size: 0.85rem;">Choose servings or measure by weight/volume</small>
+                </div>
+
+                <button type="button" class="btn" id="addMealToDay">Add to Day</button>
+            </div>
+
+            <div class="card">
+                <h2>Today's Meals</h2>
+                <div id="dayMealsList"></div>
+            </div>
+
+            <!-- Day Totals -->
+            <div class="total-macros" style="margin-top: 20px;">
+                <h2>Daily Totals</h2>
+                <div class="total-grid">
+                    <div class="total-item">
+                        <div class="total-label">PROTEIN</div>
+                        <div class="total-value" id="dayProtein">0</div>
+                    </div>
+                    <div class="total-item">
+                        <div class="total-label">CARBS</div>
+                        <div class="total-value" id="dayCarbs">0</div>
+                    </div>
+                    <div class="total-item">
+                        <div class="total-label">FATS</div>
+                        <div class="total-value" id="dayFats">0</div>
+                    </div>
+                    <div class="total-item">
+                        <div class="total-label">CALORIES</div>
+                        <div class="total-value" id="dayCalories">0</div>
+                    </div>
+                </div>
+                <div style="margin-top: 20px; font-size: 1.2rem;">
+                    Fiber: <span id="dayFiber" style="font-weight: 700;">0</span>g
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Unit conversion constants (to grams or ml)
+        const UNIT_CONVERSIONS = {
+            'g': 1,
+            'oz': 28.3495,
+            'lb': 453.592,
+            'cup': 240,  // ml for liquids, varies for solids
+            'tbsp': 15,  // ml
+            'tsp': 5,    // ml
+            'ml': 1,
+            'fl_oz': 29.5735,
+            'serving': 1  // placeholder, user defines the weight
+        };
+
+        const UNIT_LABELS = {
+            'g': 'g',
+            'oz': 'oz',
+            'lb': 'lb',
+            'cup': 'cup',
+            'tbsp': 'tbsp',
+            'tsp': 'tsp',
+            'ml': 'ml',
+            'fl_oz': 'fl oz',
+            'serving': 'serving'
+        };
+
+        // Data storage
+        let foodDatabase = JSON.parse(localStorage.getItem('foodDatabase')) || [];
+        let savedMeals = JSON.parse(localStorage.getItem('savedMeals')) || [];
+        let currentMealBuilder = [];
+        let todaysMeals = JSON.parse(localStorage.getItem('todaysMeals')) || [];
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            renderFoodList();
+            updateFoodSelectors();
+            renderSavedMeals();
+            updateMealSelector();
+            renderDayMeals();
+            
+            // Event listeners
+            document.getElementById('addFoodForm').addEventListener('submit', addFood);
+            document.getElementById('addToMealBuilder').addEventListener('click', addFoodToMealBuilder);
+            document.getElementById('saveMealBtn').addEventListener('click', saveMeal);
+            document.getElementById('addMealToDay').addEventListener('click', addMealToDay);
+            document.getElementById('totalServings').addEventListener('input', calculateMealTotals);
+        });
+
+        function showPage(pageName) {
+            // Hide all pages
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+            
+            // Show selected page
+            document.getElementById(pageName + 'Page').classList.add('active');
+            event.target.classList.add('active');
+        }
+
+        // Convert any unit to grams/ml equivalent
+        function convertToBaseUnit(amount, unit) {
+            return amount * (UNIT_CONVERSIONS[unit] || 1);
+        }
+
+        // Convert from base unit back to specific unit
+        function convertFromBaseUnit(baseAmount, unit) {
+            return baseAmount / (UNIT_CONVERSIONS[unit] || 1);
+        }
+
+        function addFood(e) {
+            e.preventDefault();
+            
+            const fiberValue = parseFloat(document.getElementById('fiber').value) || 0;
+            const editingId = document.getElementById('editingFoodId').value;
+            const servingAmount = parseFloat(document.getElementById('servingAmount').value);
+            const servingUnit = document.getElementById('servingUnit').value;
+            
+            const foodData = {
+                name: document.getElementById('foodName').value,
+                servingAmount: servingAmount,
+                servingUnit: servingUnit,
+                protein: parseFloat(document.getElementById('protein').value),
+                carbs: parseFloat(document.getElementById('carbs').value),
+                fats: parseFloat(document.getElementById('fats').value),
+                fiber: fiberValue
+            };
+
+            if (editingId) {
+                // Update existing food
+                const foodIndex = foodDatabase.findIndex(f => f.id === parseInt(editingId));
+                if (foodIndex !== -1) {
+                    foodDatabase[foodIndex] = {
+                        ...foodDatabase[foodIndex],
+                        ...foodData
+                    };
+                }
+                document.getElementById('submitFoodBtn').textContent = 'Add to Database';
+                document.getElementById('cancelEditBtn').style.display = 'none';
+                document.getElementById('editingFoodId').value = '';
+            } else {
+                // Add new food
+                const food = {
+                    id: Date.now(),
+                    ...foodData
+                };
+                foodDatabase.push(food);
+            }
+
+            localStorage.setItem('foodDatabase', JSON.stringify(foodDatabase));
+            
+            renderFoodList();
+            updateFoodSelectors();
+            e.target.reset();
+        }
+
+        function editFood(id) {
+            const food = foodDatabase.find(f => f.id === id);
+            if (!food) return;
+
+            document.getElementById('editingFoodId').value = food.id;
+            document.getElementById('foodName').value = food.name;
+            document.getElementById('servingAmount').value = food.servingAmount;
+            document.getElementById('servingUnit').value = food.servingUnit;
+            document.getElementById('protein').value = food.protein;
+            document.getElementById('carbs').value = food.carbs;
+            document.getElementById('fats').value = food.fats;
+            document.getElementById('fiber').value = food.fiber;
+            
+            document.getElementById('submitFoodBtn').textContent = 'Update Food';
+            document.getElementById('cancelEditBtn').style.display = 'block';
+            
+            // Scroll to form
+            document.getElementById('addFoodForm').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function cancelEdit() {
+            document.getElementById('addFoodForm').reset();
+            document.getElementById('editingFoodId').value = '';
+            document.getElementById('submitFoodBtn').textContent = 'Add to Database';
+            document.getElementById('cancelEditBtn').style.display = 'none';
+        }
+
+        function deleteFood(id) {
+            if (confirm('Are you sure you want to delete this food?')) {
+                foodDatabase = foodDatabase.filter(f => f.id !== id);
+                localStorage.setItem('foodDatabase', JSON.stringify(foodDatabase));
+                renderFoodList();
+                updateFoodSelectors();
+            }
+        }
+
+        function renderFoodList() {
+            const listDiv = document.getElementById('foodList');
+            
+            if (foodDatabase.length === 0) {
+                listDiv.innerHTML = '<div class="empty-state">No foods added yet</div>';
+                return;
+            }
+
+            listDiv.innerHTML = foodDatabase.map(food => {
+                const calories = (food.protein * 4) + (food.carbs * 4) + (food.fats * 9);
+                const servingLabel = `${food.servingAmount} ${UNIT_LABELS[food.servingUnit]}`;
+                return `
+                    <div class="food-item">
+                        <div class="food-item-header">
+                            <span class="food-name">${food.name}</span>
+                            <div style="display: flex; gap: 8px;">
+                                <button class="btn btn-success" onclick="editFood(${food.id})">Edit</button>
+                                <button class="btn btn-danger" onclick="deleteFood(${food.id})">Delete</button>
+                            </div>
+                        </div>
+                        <div style="font-size: 0.85rem; color: #666; margin-bottom: 8px;">
+                            Per ${servingLabel}
+                        </div>
+                        <div class="food-macros">
+                            <div><strong>P:</strong> ${food.protein}g</div>
+                            <div><strong>C:</strong> ${food.carbs}g</div>
+                            <div><strong>F:</strong> ${food.fats}g</div>
+                        </div>
+                        <div style="font-size: 0.85rem; color: #666; margin-top: 4px;"><strong>Fiber:</strong> ${food.fiber}g</div>
+                        <div style="font-size: 0.85rem; color: #666; margin-top: 4px;">
+                            <strong>Calories:</strong> ${calories.toFixed(0)}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function updateFoodSelectors() {
+            const select = document.getElementById('selectFoodForMeal');
+            select.innerHTML = '<option value="">Choose a food...</option>' +
+                foodDatabase.map(food => 
+                    `<option value="${food.id}">${food.name}</option>`
+                ).join('');
+        }
+
+        function addFoodToMealBuilder() {
+            const selectedId = parseInt(document.getElementById('selectFoodForMeal').value);
+            if (!selectedId) {
+                alert('Please select a food');
+                return;
+            }
+
+            const food = foodDatabase.find(f => f.id === selectedId);
+            if (!food) return;
+
+            currentMealBuilder.push({
+                ...food,
+                builderId: Date.now(),
+                amount: food.servingAmount,
+                unit: food.servingUnit
+            });
+
+            renderMealBuilder();
+            calculateMealTotals();
+        }
+
+        function removeFoodFromBuilder(builderId) {
+            currentMealBuilder = currentMealBuilder.filter(f => f.builderId !== builderId);
+            renderMealBuilder();
+            calculateMealTotals();
+        }
+
+        function updateBuilderItem(builderId, field, value) {
+            const item = currentMealBuilder.find(f => f.builderId === builderId);
+            if (item) {
+                item[field] = field === 'unit' ? value : parseFloat(value);
+                renderMealBuilder();
+                calculateMealTotals();
+            }
+        }
+
+        function renderMealBuilder() {
+            const builderDiv = document.getElementById('mealBuilderItems');
+            
+            if (currentMealBuilder.length === 0) {
+                builderDiv.innerHTML = '<div class="empty-state">No foods in meal yet</div>';
+                return;
+            }
+
+            builderDiv.innerHTML = currentMealBuilder.map(item => {
+                // Convert current amount to base units
+                const baseUnits = convertToBaseUnit(item.amount, item.unit);
+                // Get the food's base units
+                const foodBaseUnits = convertToBaseUnit(item.servingAmount, item.servingUnit);
+                // Calculate multiplier
+                const multiplier = baseUnits / foodBaseUnits;
+                
+                const protein = (item.protein * multiplier).toFixed(1);
+                const carbs = (item.carbs * multiplier).toFixed(1);
+                const fats = (item.fats * multiplier).toFixed(1);
+                const fiber = ((item.fiber || 0) * multiplier).toFixed(1);
+                const calories = ((item.protein * 4 + item.carbs * 4 + item.fats * 9) * multiplier).toFixed(0);
+
+                return `
+                    <div class="meal-item">
+                        <div class="meal-item-header">
+                            <span class="meal-food-name">${item.name}</span>
+                            <button class="btn btn-danger" onclick="removeFoodFromBuilder(${item.builderId})">Remove</button>
+                        </div>
+                        
+                        <div class="portion-controls">
+                            <div class="portion-input">
+                                <input type="number" value="${item.amount}" step="0.1" min="0.1" 
+                                    onchange="updateBuilderItem(${item.builderId}, 'amount', this.value)">
+                                <select onchange="updateBuilderItem(${item.builderId}, 'unit', this.value)">
+                                    <option value="g" ${item.unit === 'g' ? 'selected' : ''}>g</option>
+                                    <option value="oz" ${item.unit === 'oz' ? 'selected' : ''}>oz</option>
+                                    <option value="lb" ${item.unit === 'lb' ? 'selected' : ''}>lb</option>
+                                    <option value="cup" ${item.unit === 'cup' ? 'selected' : ''}>cup</option>
+                                    <option value="tbsp" ${item.unit === 'tbsp' ? 'selected' : ''}>tbsp</option>
+                                    <option value="tsp" ${item.unit === 'tsp' ? 'selected' : ''}>tsp</option>
+                                    <option value="ml" ${item.unit === 'ml' ? 'selected' : ''}>ml</option>
+                                    <option value="fl_oz" ${item.unit === 'fl_oz' ? 'selected' : ''}>fl oz</option>
+                                    <option value="serving" ${item.unit === 'serving' ? 'selected' : ''}>serving</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="macro-display">
+                            <div class="macro-item">
+                                <div class="macro-label">Protein</div>
+                                <div class="macro-value">${protein}g</div>
+                            </div>
+                            <div class="macro-item">
+                                <div class="macro-label">Carbs</div>
+                                <div class="macro-value">${carbs}g</div>
+                            </div>
+                            <div class="macro-item">
+                                <div class="macro-label">Fats</div>
+                                <div class="macro-value">${fats}g</div>
+                            </div>
+                            <div class="macro-item">
+                                <div class="macro-label">Calories</div>
+                                <div class="macro-value">${calories}</div>
+                            </div>
+                        </div>
+                        <div style="text-align: center; margin-top: 8px; font-size: 0.9rem; color: #666;"><strong>Fiber:</strong> ${fiber}g</div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function calculateMealTotals() {
+            let totalProtein = 0;
+            let totalCarbs = 0;
+            let totalFats = 0;
+            let totalFiber = 0;
+
+            currentMealBuilder.forEach(item => {
+                const baseUnits = convertToBaseUnit(item.amount, item.unit);
+                const foodBaseUnits = convertToBaseUnit(item.servingAmount, item.servingUnit);
+                const multiplier = baseUnits / foodBaseUnits;
+                
+                totalProtein += item.protein * multiplier;
+                totalCarbs += item.carbs * multiplier;
+                totalFats += item.fats * multiplier;
+                totalFiber += (item.fiber || 0) * multiplier;
+            });
+
+            const totalServings = parseFloat(document.getElementById('totalServings').value) || 1;
+            
+            const perServingProtein = totalProtein / totalServings;
+            const perServingCarbs = totalCarbs / totalServings;
+            const perServingFats = totalFats / totalServings;
+            const perServingFiber = totalFiber / totalServings;
+            const perServingCalories = (perServingProtein * 4) + (perServingCarbs * 4) + (perServingFats * 9);
+
+            document.getElementById('mealProtein').textContent = perServingProtein.toFixed(1);
+            document.getElementById('mealCarbs').textContent = perServingCarbs.toFixed(1);
+            document.getElementById('mealFats').textContent = perServingFats.toFixed(1);
+            document.getElementById('mealCalories').textContent = perServingCalories.toFixed(0);
+            document.getElementById('mealFiber').textContent = perServingFiber.toFixed(1);
+        }
+
+        function saveMeal() {
+            const mealName = document.getElementById('mealName').value.trim();
+            if (!mealName) {
+                alert('Please enter a meal name');
+                return;
+            }
+
+            if (currentMealBuilder.length === 0) {
+                alert('Please add foods to your meal');
+                return;
+            }
+
+            const totalServings = parseFloat(document.getElementById('totalServings').value) || 1;
+
+            // Calculate totals
+            let totalProtein = 0;
+            let totalCarbs = 0;
+            let totalFats = 0;
+            let totalFiber = 0;
+
+            currentMealBuilder.forEach(item => {
+                const baseUnits = convertToBaseUnit(item.amount, item.unit);
+                const foodBaseUnits = convertToBaseUnit(item.servingAmount, item.servingUnit);
+                const multiplier = baseUnits / foodBaseUnits;
+                
+                totalProtein += item.protein * multiplier;
+                totalCarbs += item.carbs * multiplier;
+                totalFats += item.fats * multiplier;
+                totalFiber += (item.fiber || 0) * multiplier;
+            });
+
+            const meal = {
+                id: Date.now(),
+                name: mealName,
+                totalServings: totalServings,
+                foods: currentMealBuilder,
+                perServing: {
+                    protein: totalProtein / totalServings,
+                    carbs: totalCarbs / totalServings,
+                    fats: totalFats / totalServings,
+                    fiber: totalFiber / totalServings
+                }
+            };
+
+            savedMeals.push(meal);
+            localStorage.setItem('savedMeals', JSON.stringify(savedMeals));
+
+            // Clear builder
+            currentMealBuilder = [];
+            document.getElementById('mealName').value = '';
+            document.getElementById('totalServings').value = '1';
+            renderMealBuilder();
+            calculateMealTotals();
+            renderSavedMeals();
+            updateMealSelector();
+
+            alert('Meal saved successfully!');
+        }
+
+        function deleteMeal(id) {
+            if (confirm('Are you sure you want to delete this meal?')) {
+                savedMeals = savedMeals.filter(m => m.id !== id);
+                localStorage.setItem('savedMeals', JSON.stringify(savedMeals));
+                renderSavedMeals();
+                updateMealSelector();
+            }
+        }
+
+        function renderSavedMeals() {
+            const listDiv = document.getElementById('savedMealsList');
+            
+            if (savedMeals.length === 0) {
+                listDiv.innerHTML = '<div class="empty-state">No saved meals yet</div>';
+                return;
+            }
+
+            listDiv.innerHTML = savedMeals.map(meal => {
+                const calories = (meal.perServing.protein * 4) + (meal.perServing.carbs * 4) + (meal.perServing.fats * 9);
+                return `
+                    <div class="saved-meal-item">
+                        <div class="saved-meal-header">
+                            <span class="saved-meal-name">${meal.name}</span>
+                            <button class="btn btn-danger" onclick="deleteMeal(${meal.id})">Delete</button>
+                        </div>
+                        <div style="font-size: 0.9rem; color: #666; margin-bottom: 10px;">
+                            Makes ${meal.totalServings} serving${meal.totalServings > 1 ? 's' : ''}
+                        </div>
+                        <div class="meal-stats">
+                            <div style="font-weight: 600; margin-bottom: 8px;">Per Serving:</div>
+                            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; font-size: 0.9rem;">
+                                <div><strong>Protein:</strong> ${meal.perServing.protein.toFixed(1)}g</div>
+                                <div><strong>Carbs:</strong> ${meal.perServing.carbs.toFixed(1)}g</div>
+                                <div><strong>Fats:</strong> ${meal.perServing.fats.toFixed(1)}g</div>
+                                <div><strong>Fiber:</strong> ${meal.perServing.fiber.toFixed(1)}g</div>
+                                <div style="grid-column: 1 / -1;"><strong>Calories:</strong> ${calories.toFixed(0)}</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function updateMealSelector() {
+            const select = document.getElementById('selectMealForDay');
+            select.innerHTML = '<option value="">Choose a meal...</option>' +
+                savedMeals.map(meal => 
+                    `<option value="${meal.id}">${meal.name}</option>`
+                ).join('');
+        }
+
+        function addMealToDay() {
+            const selectedId = parseInt(document.getElementById('selectMealForDay').value);
+            if (!selectedId) {
+                alert('Please select a meal');
+                return;
+            }
+
+            const meal = savedMeals.find(m => m.id === selectedId);
+            if (!meal) return;
+
+            const amount = parseFloat(document.getElementById('mealServingsForDay').value) || 1;
+            const unit = document.getElementById('mealUnitForDay').value;
+
+            todaysMeals.push({
+                id: Date.now(),
+                mealId: meal.id,
+                mealName: meal.name,
+                amount: amount,
+                unit: unit,
+                macros: meal.perServing
+            });
+
+            localStorage.setItem('todaysMeals', JSON.stringify(todaysMeals));
+            renderDayMeals();
+            calculateDayTotals();
+        }
+
+        function removeMealFromDay(id) {
+            todaysMeals = todaysMeals.filter(m => m.id !== id);
+            localStorage.setItem('todaysMeals', JSON.stringify(todaysMeals));
+            renderDayMeals();
+            calculateDayTotals();
+        }
+
+        function updateDayMealAmount(id, amount) {
+            const meal = todaysMeals.find(m => m.id === id);
+            if (meal) {
+                meal.amount = parseFloat(amount);
+                localStorage.setItem('todaysMeals', JSON.stringify(todaysMeals));
+                renderDayMeals();
+                calculateDayTotals();
+            }
+        }
+
+        function updateDayMealUnit(id, unit) {
+            const meal = todaysMeals.find(m => m.id === id);
+            if (meal) {
+                meal.unit = unit;
+                localStorage.setItem('todaysMeals', JSON.stringify(todaysMeals));
+                renderDayMeals();
+                calculateDayTotals();
+            }
+        }
+
+        function renderDayMeals() {
+            const listDiv = document.getElementById('dayMealsList');
+            
+            if (todaysMeals.length === 0) {
+                listDiv.innerHTML = '<div class="empty-state">No meals added today</div>';
+                calculateDayTotals();
+                return;
+            }
+
+            listDiv.innerHTML = todaysMeals.map(item => {
+                // Handle legacy data that might use 'servings' instead of 'amount'/'unit'
+                const amount = item.amount !== undefined ? item.amount : (item.servings || 1);
+                const unit = item.unit || 'serving';
+                
+                // Calculate multiplier based on unit
+                let multiplier;
+                if (unit === 'serving') {
+                    multiplier = amount;
+                } else {
+                    // For weight/volume units, we need to know the meal's total weight
+                    // Since we don't store this, we'll treat "serving" as a default
+                    multiplier = amount; // Simplified - assumes 1:1 for now
+                }
+                
+                const protein = (item.macros.protein * multiplier).toFixed(1);
+                const carbs = (item.macros.carbs * multiplier).toFixed(1);
+                const fats = (item.macros.fats * multiplier).toFixed(1);
+                const fiber = (item.macros.fiber * multiplier).toFixed(1);
+                const calories = ((item.macros.protein * 4 + item.macros.carbs * 4 + item.macros.fats * 9) * multiplier).toFixed(0);
+
+                return `
+                    <div class="day-meal-item">
+                        <div class="meal-item-header">
+                            <span class="meal-food-name">${item.mealName}</span>
+                            <button class="btn btn-danger" onclick="removeMealFromDay(${item.id})">Remove</button>
+                        </div>
+                        
+                        <div style="margin-bottom: 12px;">
+                            <div class="portion-controls">
+                                <div class="portion-input">
+                                    <input type="number" value="${amount}" step="0.1" min="0.1" 
+                                        onchange="updateDayMealAmount(${item.id}, this.value)">
+                                    <select onchange="updateDayMealUnit(${item.id}, this.value)">
+                                        <option value="serving" ${unit === 'serving' ? 'selected' : ''}>servings</option>
+                                        <option value="g" ${unit === 'g' ? 'selected' : ''}>g</option>
+                                        <option value="oz" ${unit === 'oz' ? 'selected' : ''}>oz</option>
+                                        <option value="lb" ${unit === 'lb' ? 'selected' : ''}>lb</option>
+                                        <option value="cup" ${unit === 'cup' ? 'selected' : ''}>cup</option>
+                                        <option value="tbsp" ${unit === 'tbsp' ? 'selected' : ''}>tbsp</option>
+                                        <option value="tsp" ${unit === 'tsp' ? 'selected' : ''}>tsp</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="macro-display">
+                            <div class="macro-item">
+                                <div class="macro-label">Protein</div>
+                                <div class="macro-value">${protein}g</div>
+                            </div>
+                            <div class="macro-item">
+                                <div class="macro-label">Carbs</div>
+                                <div class="macro-value">${carbs}g</div>
+                            </div>
+                            <div class="macro-item">
+                                <div class="macro-label">Fats</div>
+                                <div class="macro-value">${fats}g</div>
+                            </div>
+                            <div class="macro-item">
+                                <div class="macro-label">Calories</div>
+                                <div class="macro-value">${calories}</div>
+                            </div>
+                        </div>
+                        <div style="text-align: center; margin-top: 8px; font-size: 0.9rem; color: #666;"><strong>Fiber:</strong> ${fiber}g</div>
+                    </div>
+                `;
+            }).join('');
+
+            calculateDayTotals();
+        }
+
+        function calculateDayTotals() {
+            let totalProtein = 0;
+            let totalCarbs = 0;
+            let totalFats = 0;
+            let totalFiber = 0;
+
+            todaysMeals.forEach(item => {
+                // Handle legacy data
+                const amount = item.amount !== undefined ? item.amount : (item.servings || 1);
+                const unit = item.unit || 'serving';
+                
+                // Calculate multiplier
+                let multiplier;
+                if (unit === 'serving') {
+                    multiplier = amount;
+                } else {
+                    // For now, treat all units as direct multipliers
+                    // This is simplified - in a real app you'd need to know the meal's total weight
+                    multiplier = amount;
+                }
+                
+                totalProtein += item.macros.protein * multiplier;
+                totalCarbs += item.macros.carbs * multiplier;
+                totalFats += item.macros.fats * multiplier;
+                totalFiber += item.macros.fiber * multiplier;
+            });
+
+            const totalCalories = (totalProtein * 4) + (totalCarbs * 4) + (totalFats * 9);
+
+            document.getElementById('dayProtein').textContent = totalProtein.toFixed(1);
+            document.getElementById('dayCarbs').textContent = totalCarbs.toFixed(1);
+            document.getElementById('dayFats').textContent = totalFats.toFixed(1);
+            document.getElementById('dayCalories').textContent = totalCalories.toFixed(0);
+            document.getElementById('dayFiber').textContent = totalFiber.toFixed(1);
+        }
+    </script>
+</body>
+</html>
