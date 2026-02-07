@@ -969,7 +969,6 @@
             let totalCarbs = 0;
             let totalFats = 0;
             let totalFiber = 0;
-            let totalCalories = 0;
 
             currentMealBuilder.forEach(item => {
                 const baseUnits = convertToBaseUnit(item.amount, item.unit);
@@ -980,9 +979,6 @@
                 totalCarbs += item.carbs * multiplier;
                 totalFats += item.fats * multiplier;
                 totalFiber += (item.fiber || 0) * multiplier;
-                
-                const itemCalories = item.calories !== undefined ? item.calories : (item.protein * 4 + item.carbs * 4 + item.fats * 9);
-                totalCalories += itemCalories * multiplier;
             });
 
             const totalServings = parseFloat(document.getElementById('totalServings').value) || 1;
@@ -991,7 +987,7 @@
             const perServingCarbs = totalCarbs / totalServings;
             const perServingFats = totalFats / totalServings;
             const perServingFiber = totalFiber / totalServings;
-            const perServingCalories = totalCalories / totalServings;
+            const perServingCalories = (perServingProtein * 4) + (perServingCarbs * 4) + (perServingFats * 9);
 
             document.getElementById('mealProtein').textContent = perServingProtein.toFixed(1);
             document.getElementById('mealCarbs').textContent = perServingCarbs.toFixed(1);
@@ -1077,50 +1073,6 @@
             updateMealSelector();
         }
 
-        function editMeal(id) {
-            const meal = savedMeals.find(m => m.id === id);
-            if (!meal) return;
-
-            // Switch to meals page
-            showPage('meals');
-
-            // Populate the form
-            document.getElementById('editingMealId').value = meal.id;
-            document.getElementById('mealName').value = meal.name;
-            document.getElementById('totalServings').value = meal.totalServings;
-            
-            // Load the foods into the builder
-            currentMealBuilder = meal.foods.map(food => ({
-                ...food,
-                builderId: Date.now() + Math.random() // New unique IDs for editing
-            }));
-
-            // Update UI
-            document.getElementById('mealBuilderTitle').textContent = 'Edit Meal';
-            document.getElementById('saveMealBtn').textContent = 'Update Meal';
-            document.getElementById('cancelMealEditBtn').style.display = 'block';
-            
-            renderMealBuilder();
-            calculateMealTotals();
-            
-            // Scroll to top
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        }
-
-        function cancelMealEdit() {
-            document.getElementById('editingMealId').value = '';
-            document.getElementById('mealName').value = '';
-            document.getElementById('totalServings').value = '1';
-            currentMealBuilder = [];
-            
-            document.getElementById('mealBuilderTitle').textContent = 'Build Your Meal';
-            document.getElementById('saveMealBtn').textContent = 'Save Meal';
-            document.getElementById('cancelMealEditBtn').style.display = 'none';
-            
-            renderMealBuilder();
-            calculateMealTotals();
-        }
-
         function deleteMeal(id) {
             if (confirm('Are you sure you want to delete this meal?')) {
                 savedMeals = savedMeals.filter(m => m.id !== id);
@@ -1139,7 +1091,7 @@
             }
 
             listDiv.innerHTML = savedMeals.map(meal => {
-                const calories = meal.perServing.calories || (meal.perServing.protein * 4 + meal.perServing.carbs * 4 + meal.perServing.fats * 9);
+                const calories = (meal.perServing.protein * 4) + (meal.perServing.carbs * 4) + (meal.perServing.fats * 9);
                 return `
                     <div class="saved-meal-item">
                         <div class="saved-meal-header">
@@ -1197,32 +1149,48 @@
             }
         }
 
-        function addMealToDay() {
-            const selectedId = parseInt(document.getElementById('selectMealForDay').value);
-            if (!selectedId) {
-                alert('Please select a meal');
-                return;
-            }
-
-            const meal = savedMeals.find(m => m.id === selectedId);
+        function editMeal(id) {
+            const meal = savedMeals.find(m => m.id === id);
             if (!meal) return;
 
-            const amount = parseFloat(document.getElementById('mealServingsForDay').value) || 1;
-            const unit = document.getElementById('mealUnitForDay').value;
+            // Switch to meals page
+            showPage('meals');
 
-            todaysMeals.push({
-                id: Date.now(),
-                type: 'meal',
-                mealId: meal.id,
-                mealName: meal.name,
-                amount: amount,
-                unit: unit,
-                macros: meal.perServing
-            });
+            // Populate the form
+            document.getElementById('editingMealId').value = meal.id;
+            document.getElementById('mealName').value = meal.name;
+            document.getElementById('totalServings').value = meal.totalServings;
+            
+            // Load the foods into the builder
+            currentMealBuilder = meal.foods.map(food => ({
+                ...food,
+                builderId: Date.now() + Math.random() // New unique IDs for editing
+            }));
 
-            localStorage.setItem('todaysMeals', JSON.stringify(todaysMeals));
-            renderDayMeals();
-            calculateDayTotals();
+            // Update UI
+            document.getElementById('mealBuilderTitle').textContent = 'Edit Meal';
+            document.getElementById('saveMealBtn').textContent = 'Update Meal';
+            document.getElementById('cancelMealEditBtn').style.display = 'block';
+            
+            renderMealBuilder();
+            calculateMealTotals();
+            
+            // Scroll to top
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function cancelMealEdit() {
+            document.getElementById('editingMealId').value = '';
+            document.getElementById('mealName').value = '';
+            document.getElementById('totalServings').value = '1';
+            currentMealBuilder = [];
+            
+            document.getElementById('mealBuilderTitle').textContent = 'Build Your Meal';
+            document.getElementById('saveMealBtn').textContent = 'Save Meal';
+            document.getElementById('cancelMealEditBtn').style.display = 'none';
+            
+            renderMealBuilder();
+            calculateMealTotals();
         }
 
         function addFoodToDay() {
@@ -1256,6 +1224,34 @@
                     fiber: (food.fiber || 0) * multiplier,
                     calories: (food.calories !== undefined ? food.calories : (food.protein * 4 + food.carbs * 4 + food.fats * 9)) * multiplier
                 }
+            });
+
+            localStorage.setItem('todaysMeals', JSON.stringify(todaysMeals));
+            renderDayMeals();
+            calculateDayTotals();
+        }
+
+        function addMealToDay() {
+            const selectedId = parseInt(document.getElementById('selectMealForDay').value);
+            if (!selectedId) {
+                alert('Please select a meal');
+                return;
+            }
+
+            const meal = savedMeals.find(m => m.id === selectedId);
+            if (!meal) return;
+
+            const amount = parseFloat(document.getElementById('mealServingsForDay').value) || 1;
+            const unit = document.getElementById('mealUnitForDay').value;
+
+            todaysMeals.push({
+                id: Date.now(),
+                type: 'meal',
+                mealId: meal.id,
+                mealName: meal.name,
+                amount: amount,
+                unit: unit,
+                macros: meal.perServing
             });
 
             localStorage.setItem('todaysMeals', JSON.stringify(todaysMeals));
