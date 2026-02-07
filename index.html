@@ -13,7 +13,7 @@
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #1e3a5f 0%, #2c5282 100%);
             min-height: 100vh;
             padding: 20px;
         }
@@ -59,9 +59,9 @@
         }
 
         .nav-btn.active {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #2c5282 0%, #1e3a5f 100%);
             color: white;
-            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+            box-shadow: 0 4px 15px rgba(44, 82, 130, 0.4);
         }
 
         .page {
@@ -87,10 +87,10 @@
         }
 
         .card h2 {
-            color: #667eea;
+            color: #2c5282;
             margin-bottom: 20px;
             font-size: 1.5rem;
-            border-bottom: 3px solid #667eea;
+            border-bottom: 3px solid #2c5282;
             padding-bottom: 10px;
         }
 
@@ -126,11 +126,11 @@
         input:focus,
         select:focus {
             outline: none;
-            border-color: #667eea;
+            border-color: #2c5282;
         }
 
         .btn {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #2c5282 0%, #1e3a5f 100%);
             color: white;
             border: none;
             padding: 12px 24px;
@@ -144,7 +144,7 @@
 
         .btn:hover {
             transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+            box-shadow: 0 6px 20px rgba(44, 82, 130, 0.4);
         }
 
         .btn:active {
@@ -152,14 +152,14 @@
         }
 
         .btn-danger {
-            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
             padding: 6px 12px;
             font-size: 0.85rem;
             width: auto;
         }
 
         .btn-success {
-            background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+            background: linear-gradient(135deg, #0d9488 0%, #0f766e 100%);
             padding: 8px 16px;
             font-size: 0.9rem;
             width: auto;
@@ -176,7 +176,7 @@
             padding: 12px;
             border-radius: 8px;
             margin-bottom: 10px;
-            border-left: 4px solid #667eea;
+            border-left: 4px solid #2c5282;
         }
 
         .food-item-header {
@@ -218,7 +218,7 @@
 
         .meal-food-name {
             font-weight: 700;
-            color: #667eea;
+            color: #2c5282;
             font-size: 1.1rem;
         }
 
@@ -244,7 +244,7 @@
         }
 
         .macro-display {
-            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            background: linear-gradient(135deg, #e8eef5 0%, #d4dce8 100%);
             padding: 12px;
             border-radius: 8px;
             display: grid;
@@ -273,7 +273,7 @@
         }
 
         .total-macros {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #2c5282 0%, #1e3a5f 100%);
             color: white;
             padding: 24px;
             border-radius: 16px;
@@ -318,7 +318,7 @@
 
         .saved-meal-item {
             background: white;
-            border: 2px solid #667eea;
+            border: 2px solid #2c5282;
             border-radius: 10px;
             padding: 16px;
             margin-bottom: 12px;
@@ -333,7 +333,7 @@
 
         .saved-meal-name {
             font-weight: 700;
-            color: #667eea;
+            color: #2c5282;
             font-size: 1.2rem;
         }
 
@@ -458,7 +458,15 @@
                             <input type="file" id="importFileInput" accept=".csv" style="display: none;" onchange="importFoodDatabase(event)">
                         </div>
                     </div>
-                    <div class="food-list" id="foodList"></div>
+                    
+                    <!-- Search Bar -->
+                    <div class="form-group">
+                        <input type="text" id="foodSearchInput" placeholder="Search foods..." 
+                            style="width: 100%; padding: 10px 12px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 1rem;"
+                            onkeyup="filterFoodList()">
+                    </div>
+                    
+                    <div class="food-list" id="foodList" style="max-height: 600px;"></div>
                 </div>
             </div>
         </div>
@@ -485,7 +493,7 @@
                 <div style="overflow-x: auto;">
                     <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
                         <thead>
-                            <tr style="background: #667eea; color: white;">
+                            <tr style="background: #2c5282; color: white;">
                                 <th style="padding: 10px; text-align: left; border-radius: 8px 0 0 0; min-width: 200px;">Food</th>
                                 <th style="padding: 10px; text-align: center; min-width: 100px;">Amount</th>
                                 <th style="padding: 10px; text-align: center; min-width: 100px;">Unit</th>
@@ -502,21 +510,21 @@
                             <!-- Rows will be added here dynamically -->
                         </tbody>
                         <tfoot>
-                            <tr style="background: #f8f9fa; border-top: 3px solid #667eea;">
+                            <tr style="background: #f8f9fa; border-top: 3px solid #2c5282;">
                                 <td colspan="3" style="padding: 12px; font-weight: 700; font-size: 1.1rem; color: #333;">TOTAL</td>
-                                <td style="padding: 12px; text-align: center; font-weight: 700; color: #667eea; font-size: 1.1rem;" id="totalProteinTable">0g</td>
-                                <td style="padding: 12px; text-align: center; font-weight: 700; color: #f093fb; font-size: 1.1rem;" id="totalCarbsTable">0g</td>
-                                <td style="padding: 12px; text-align: center; font-weight: 700; color: #43e97b; font-size: 1.1rem;" id="totalFatsTable">0g</td>
+                                <td style="padding: 12px; text-align: center; font-weight: 700; color: #3b82f6; font-size: 1.1rem;" id="totalProteinTable">0g</td>
+                                <td style="padding: 12px; text-align: center; font-weight: 700; color: #f59e0b; font-size: 1.1rem;" id="totalCarbsTable">0g</td>
+                                <td style="padding: 12px; text-align: center; font-weight: 700; color: #10b981; font-size: 1.1rem;" id="totalFatsTable">0g</td>
                                 <td style="padding: 12px; text-align: center; font-weight: 700; color: #666; font-size: 1.1rem;" id="totalFiberTable">0g</td>
                                 <td style="padding: 12px; text-align: center; font-weight: 700; color: #333; font-size: 1.1rem;" id="totalCaloriesTable">0</td>
                                 <td style="padding: 12px; text-align: center; font-weight: 700; color: #333; font-size: 1.1rem;" id="totalPCalTable">0</td>
                                 <td></td>
                             </tr>
-                            <tr style="background: #e8ebf7; border-top: 2px solid #667eea;">
-                                <td colspan="3" style="padding: 12px; font-weight: 700; font-size: 1rem; color: #667eea;">PER SERVING</td>
-                                <td style="padding: 12px; text-align: center; font-weight: 700; color: #667eea;" id="perServingProteinTable">0g</td>
-                                <td style="padding: 12px; text-align: center; font-weight: 700; color: #f093fb;" id="perServingCarbsTable">0g</td>
-                                <td style="padding: 12px; text-align: center; font-weight: 700; color: #43e97b;" id="perServingFatsTable">0g</td>
+                            <tr style="background: #e8ebf7; border-top: 2px solid #2c5282;">
+                                <td colspan="3" style="padding: 12px; font-weight: 700; font-size: 1rem; color: #3b82f6;">PER SERVING</td>
+                                <td style="padding: 12px; text-align: center; font-weight: 700; color: #3b82f6;" id="perServingProteinTable">0g</td>
+                                <td style="padding: 12px; text-align: center; font-weight: 700; color: #f59e0b;" id="perServingCarbsTable">0g</td>
+                                <td style="padding: 12px; text-align: center; font-weight: 700; color: #10b981;" id="perServingFatsTable">0g</td>
                                 <td style="padding: 12px; text-align: center; font-weight: 700; color: #666;" id="perServingFiberTable">0g</td>
                                 <td style="padding: 12px; text-align: center; font-weight: 700; color: #333;" id="perServingCaloriesTable">0</td>
                                 <td style="padding: 12px; text-align: center; font-weight: 700; color: #333;" id="perServingPCalTable">0</td>
@@ -846,34 +854,69 @@
                 return;
             }
 
-            listDiv.innerHTML = foodDatabase.map(food => {
-                // Use stored calories or calculate if not present (for legacy data)
+            // Sort alphabetically by name
+            const sortedFoods = [...foodDatabase].sort((a, b) => a.name.localeCompare(b.name));
+
+            // Create table
+            let tableHTML = `
+                <table style="width: 100%; border-collapse: collapse; font-size: 0.9rem;">
+                    <thead>
+                        <tr style="background: #2c5282; color: white; position: sticky; top: 0;">
+                            <th style="padding: 8px; text-align: left; border-radius: 8px 0 0 0;">Food</th>
+                            <th style="padding: 8px; text-align: center;">Serving</th>
+                            <th style="padding: 8px; text-align: center;">P</th>
+                            <th style="padding: 8px; text-align: center;">C</th>
+                            <th style="padding: 8px; text-align: center;">F</th>
+                            <th style="padding: 8px; text-align: center;">Fiber</th>
+                            <th style="padding: 8px; text-align: center;">Cal</th>
+                            <th style="padding: 8px; text-align: center; border-radius: 0 8px 0 0;"></th>
+                        </tr>
+                    </thead>
+                    <tbody class="food-table-body">
+            `;
+
+            sortedFoods.forEach((food, index) => {
                 const calories = food.calories !== undefined ? food.calories : (food.protein * 4 + food.carbs * 4 + food.fats * 9);
                 const servingLabel = `${food.servingAmount} ${UNIT_LABELS[food.servingUnit]}`;
-                return `
-                    <div class="food-item">
-                        <div class="food-item-header">
-                            <span class="food-name">${food.name}</span>
-                            <div style="display: flex; gap: 8px;">
-                                <button class="btn btn-success" onclick="editFood(${food.id})">Edit</button>
-                                <button class="btn btn-danger" onclick="deleteFood(${food.id})">Delete</button>
-                            </div>
-                        </div>
-                        <div style="font-size: 0.85rem; color: #666; margin-bottom: 8px;">
-                            Per ${servingLabel}
-                        </div>
-                        <div class="food-macros">
-                            <div><strong>P:</strong> ${food.protein}g</div>
-                            <div><strong>C:</strong> ${food.carbs}g</div>
-                            <div><strong>F:</strong> ${food.fats}g</div>
-                        </div>
-                        <div style="font-size: 0.85rem; color: #666; margin-top: 4px;"><strong>Fiber:</strong> ${food.fiber}g</div>
-                        <div style="font-size: 0.85rem; color: #666; margin-top: 4px;">
-                            <strong>Calories:</strong> ${calories.toFixed(0)}
-                        </div>
-                    </div>
+                const rowBg = index % 2 === 0 ? 'white' : '#f8f9fa';
+
+                tableHTML += `
+                    <tr style="background: ${rowBg}; border-bottom: 1px solid #e0e0e0;" class="food-row" data-name="${food.name.toLowerCase()}">
+                        <td style="padding: 8px; font-weight: 600; color: #333;">${food.name}</td>
+                        <td style="padding: 8px; text-align: center; color: #666;">${servingLabel}</td>
+                        <td style="padding: 8px; text-align: center; color: #3b82f6; font-weight: 600;">${food.protein}g</td>
+                        <td style="padding: 8px; text-align: center; color: #f59e0b; font-weight: 600;">${food.carbs}g</td>
+                        <td style="padding: 8px; text-align: center; color: #10b981; font-weight: 600;">${food.fats}g</td>
+                        <td style="padding: 8px; text-align: center; color: #666;">${food.fiber}g</td>
+                        <td style="padding: 8px; text-align: center; font-weight: 700;">${calories.toFixed(0)}</td>
+                        <td style="padding: 8px; text-align: center;">
+                            <button class="btn btn-success" onclick="editFood(${food.id})" style="padding: 4px 8px; font-size: 0.8rem; margin-right: 4px;">Edit</button>
+                            <button class="btn btn-danger" onclick="deleteFood(${food.id})" style="padding: 4px 8px; font-size: 0.8rem;">Del</button>
+                        </td>
+                    </tr>
                 `;
-            }).join('');
+            });
+
+            tableHTML += `
+                    </tbody>
+                </table>
+            `;
+
+            listDiv.innerHTML = tableHTML;
+        }
+
+        function filterFoodList() {
+            const searchInput = document.getElementById('foodSearchInput').value.toLowerCase();
+            const rows = document.querySelectorAll('.food-row');
+            
+            rows.forEach(row => {
+                const foodName = row.getAttribute('data-name');
+                if (foodName.includes(searchInput)) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
         }
 
         function updateFoodSelectors() {
@@ -980,15 +1023,15 @@
                                 <option value="serving" ${item.unit === 'serving' ? 'selected' : ''}>serving</option>
                             </select>
                         </td>
-                        <td style="padding: 10px; text-align: center; font-weight: 600; color: #667eea;">${protein}g</td>
-                        <td style="padding: 10px; text-align: center; font-weight: 600; color: #f093fb;">${carbs}g</td>
-                        <td style="padding: 10px; text-align: center; font-weight: 600; color: #43e97b;">${fats}g</td>
+                        <td style="padding: 10px; text-align: center; font-weight: 600; color: #3b82f6;">${protein}g</td>
+                        <td style="padding: 10px; text-align: center; font-weight: 600; color: #f59e0b;">${carbs}g</td>
+                        <td style="padding: 10px; text-align: center; font-weight: 600; color: #10b981;">${fats}g</td>
                         <td style="padding: 10px; text-align: center; color: #666;">${fiber}g</td>
                         <td style="padding: 10px; text-align: center; font-weight: 700;">${calories}</td>
-                        <td style="padding: 10px; text-align: center; font-weight: 600; color: #764ba2;">${pCalRatio}</td>
+                        <td style="padding: 10px; text-align: center; font-weight: 600; color: #475569;">${pCalRatio}</td>
                         <td style="padding: 10px; text-align: center;">
                             <button onclick="removeFoodFromBuilder(${item.builderId})" 
-                                style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-weight: 600;">✕</button>
+                                style="background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%); color: white; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-weight: 600;">✕</button>
                         </td>
                     </tr>
                 `;
@@ -1349,7 +1392,7 @@
             let tableHTML = `
                 <table style="width: 100%; border-collapse: collapse;">
                     <thead>
-                        <tr style="background: #667eea; color: white;">
+                        <tr style="background: #2c5282; color: white;">
                             <th style="padding: 12px; text-align: left; border-radius: 8px 0 0 0;">Item</th>
                             <th style="padding: 12px; text-align: center;">Amount</th>
                             <th style="padding: 12px; text-align: center;">Protein</th>
@@ -1387,8 +1430,8 @@
 
                 // Type badge
                 const typeBadge = itemType === 'food' 
-                    ? '<span style="background: #43e97b; color: white; padding: 3px 8px; border-radius: 4px; font-size: 0.7rem; margin-left: 6px;">FOOD</span>'
-                    : '<span style="background: #667eea; color: white; padding: 3px 8px; border-radius: 4px; font-size: 0.7rem; margin-left: 6px;">MEAL</span>';
+                    ? '<span style="background: #10b981; color: white; padding: 3px 8px; border-radius: 4px; font-size: 0.7rem; margin-left: 6px;">FOOD</span>'
+                    : '<span style="background: #2c5282; color: white; padding: 3px 8px; border-radius: 4px; font-size: 0.7rem; margin-left: 6px;">MEAL</span>';
 
                 // Alternate row colors
                 const rowBg = index % 2 === 0 ? '#f8f9fa' : 'white';
@@ -1417,9 +1460,9 @@
                                 </select>
                             </div>
                         </td>
-                        <td style="padding: 12px; text-align: center; font-weight: 600; color: #667eea;">${protein}g</td>
-                        <td style="padding: 12px; text-align: center; font-weight: 600; color: #f093fb;">${carbs}g</td>
-                        <td style="padding: 12px; text-align: center; font-weight: 600; color: #43e97b;">${fats}g</td>
+                        <td style="padding: 12px; text-align: center; font-weight: 600; color: #3b82f6;">${protein}g</td>
+                        <td style="padding: 12px; text-align: center; font-weight: 600; color: #f59e0b;">${carbs}g</td>
+                        <td style="padding: 12px; text-align: center; font-weight: 600; color: #10b981;">${fats}g</td>
                         <td style="padding: 12px; text-align: center; color: #666;">${fiber}g</td>
                         <td style="padding: 12px; text-align: center; font-weight: 700; font-size: 1.1rem; color: #333;">${calories}</td>
                         <td style="padding: 12px; text-align: center;">
