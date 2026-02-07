@@ -450,7 +450,14 @@
 
                 <!-- Food List Section -->
                 <div class="card">
-                    <h2>My Foods</h2>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                        <h2 style="margin-bottom: 0;">My Foods</h2>
+                        <div style="display: flex; gap: 8px;">
+                            <button type="button" class="btn btn-success" onclick="exportFoodDatabase()" style="padding: 8px 16px; font-size: 0.9rem;">⬇ Export CSV</button>
+                            <button type="button" class="btn btn-success" onclick="document.getElementById('importFileInput').click()" style="padding: 8px 16px; font-size: 0.9rem;">⬆ Import CSV</button>
+                            <input type="file" id="importFileInput" accept=".csv" style="display: none;" onchange="importFoodDatabase(event)">
+                        </div>
+                    </div>
                     <div class="food-list" id="foodList"></div>
                 </div>
             </div>
@@ -1475,6 +1482,171 @@
             document.getElementById('dayProteinPct').textContent = proteinPct + '%';
             document.getElementById('dayCarbsPct').textContent = carbsPct + '%';
             document.getElementById('dayFatsPct').textContent = fatsPct + '%';
+        }
+
+        // Export food database to CSV
+        function exportFoodDatabase() {
+            const foods = foodDatabase;
+            if (foods.length === 0) {
+                alert('No foods to export!');
+                return;
+            }
+
+            const headers = ['id', 'name', 'servingAmount', 'servingUnit', 'protein', 'carbs', 'fats', 'fiber', 'calories', 'customCalories'];
+            const csvRows = [
+                headers.join(','),
+                ...foods.map(f => {
+                    return headers.map(h => {
+                        const val = f[h];
+                        if (val === undefined || val === null) return '';
+                        // Escape values that contain commas
+                        if (typeof val === 'string' && val.includes(',')) {
+                            return `"${val}"`;
+                        }
+                        return val;
+                    }).join(',');
+                })
+            ];
+            
+            const csv = csvRows.join('\n');
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `food-database-${new Date().toISOString().split('T')[0]}.csv`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        // Import food database from CSV
+        function importFoodDatabase(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const csv = e.target.result;
+                    const lines = csv.split('\n').filter(line => line.trim());
+                    
+                    if (lines.length < 2) {
+                        alert('CSV file is empty or invalid!');
+                        return;
+                    }
+
+                    const headers = lines[0].split(',').map(h => h.trim());
+                    
+                    // Validate headers
+                    const requiredHeaders = ['name', 'servingAmount', 'servingUnit', 'protein', 'carbs', 'fats'];
+                    const hasRequiredHeaders = requiredHeaders.every(h => headers.includes(h));
+                    
+                    if (!hasRequiredHeaders) {
+                        alert('CSV must have columns: name, servingAmount, servingUnit, protein, carbs, fats, fiber, calories');
+                        return;
+                    }
+
+                    const foods = [];
+                    for (let i = 1; i < lines.length; i++) {
+                        const line = lines[i].trim();
+                        if (!line) continue;
+
+                        // Handle quoted values that may contain commas
+                        const values = [];
+                        let currentValue = '';
+                        let inQuotes = false;
+                        
+                        for (let char of line) {
+                            if (char === '"') {
+                                inQuotes = !inQuotes;
+                            } else if (char === ',' && !inQuotes) {
+                                values.push(currentValue.trim());
+                                currentValue = '';
+                            } else {
+                                currentValue += char;
+                            }
+                        }
+                        values.push(currentValue.trim());
+
+                        const food = {};
+                        headers.forEach((h, idx) => {
+                            const val = values[idx];
+                            if (!val || val === '') return;
+                            
+                            if (h === 'id') {
+                                food[h] = parseInt(val) || Date.now() + i;
+                            } else if (['servingAmount', 'protein', 'carbs', 'fats', 'fiber', 'calories'].includes(h)) {
+                                food[h] = parseFloat(val) || 0;
+                            } else if (h === 'customCalories') {
+                                food[h] = val === 'true' || val === '1';
+                            } else {
+                                food[h] = val;
+                            }
+                        });
+
+                        // Ensure required fields
+                        if (food.name && food.servingAmount && food.servingUnit) {
+                            // Set defaults for missing fields
+                            food.protein = food.protein || 0;
+                            food.carbs = food.carbs || 0;
+                            food.fats = food.fats || 0;
+                            food.fiber = food.fiber || 0;
+                            if (!food.id) food.id = Date.now() + i;
+                            if (!food.calories) {
+                                food.calories = food.protein * 4 + food.carbs * 4 + food.fats * 9;
+                                food.customCalories = false;
+                            }
+                            foods.push(food);
+                        }
+                    }
+
+                    if (foods.length === 0) {
+                        alert('No valid food entries found in CSV!');
+                        return;
+                    }
+
+                    // Ask user if they want to replace or merge
+                    const replace = confirm(
+                        `Import ${foods.length} foods.\n\n` +
+                        `Click OK to REPLACE your current database (${foodDatabase.length} foods).\n` +
+                        `Click Cancel to MERGE (add new foods without deleting existing ones).`
+                    );
+
+                    if (replace) {
+                        foodDatabase = foods;
+                    } else {
+                        // Merge: add foods that don't exist, update foods with same name
+                        foods.forEach(newFood => {
+                            const existingIndex = foodDatabase.findIndex(f => 
+                                f.name.toLowerCase() === newFood.name.toLowerCase()
+                            );
+                            if (existingIndex >= 0) {
+                                // Update existing food but keep the original ID
+                                foodDatabase[existingIndex] = {
+                                    ...newFood,
+                                    id: foodDatabase[existingIndex].id
+                                };
+                            } else {
+                                // Add new food
+                                foodDatabase.push(newFood);
+                            }
+                        });
+                    }
+
+                    localStorage.setItem('foodDatabase', JSON.stringify(foodDatabase));
+                    renderFoodList();
+                    updateFoodSelectors();
+                    
+                    alert(`Successfully imported ${foods.length} foods!`);
+                    
+                    // Reset file input
+                    event.target.value = '';
+                } catch (error) {
+                    alert('Error importing CSV: ' + error.message);
+                    console.error(error);
+                }
+            };
+            
+            reader.readAsText(file);
         }
     </script>
 </body>
