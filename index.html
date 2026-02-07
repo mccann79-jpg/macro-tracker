@@ -1295,20 +1295,30 @@
                 return;
             }
 
-            listDiv.innerHTML = todaysMeals.map(item => {
+            // Create table header
+            let tableHTML = `
+                <table style="width: 100%; border-collapse: collapse;">
+                    <thead>
+                        <tr style="background: #667eea; color: white;">
+                            <th style="padding: 12px; text-align: left; border-radius: 8px 0 0 0;">Item</th>
+                            <th style="padding: 12px; text-align: center;">Amount</th>
+                            <th style="padding: 12px; text-align: center;">Protein</th>
+                            <th style="padding: 12px; text-align: center;">Carbs</th>
+                            <th style="padding: 12px; text-align: center;">Fats</th>
+                            <th style="padding: 12px; text-align: center;">Fiber</th>
+                            <th style="padding: 12px; text-align: center;">Calories</th>
+                            <th style="padding: 12px; text-align: center; border-radius: 0 8px 0 0;"></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+
+            todaysMeals.forEach((item, index) => {
                 // Handle legacy data and determine type
                 const itemType = item.type || 'meal';
                 const displayName = item.mealName || item.foodName || 'Unknown Item';
                 const amount = item.amount !== undefined ? item.amount : (item.servings || 1);
                 const unit = item.unit || 'serving';
-                
-                // Calculate multiplier based on type
-                let multiplier;
-                if (itemType === 'food' || unit === 'serving') {
-                    multiplier = 1; // Already calculated in macros for foods
-                } else {
-                    multiplier = amount; // For meals with units
-                }
                 
                 // For meals, apply multiplier; for foods, macros already calculated
                 const protein = itemType === 'meal' ? (item.macros.protein * amount).toFixed(1) : item.macros.protein.toFixed(1);
@@ -1327,62 +1337,55 @@
 
                 // Type badge
                 const typeBadge = itemType === 'food' 
-                    ? '<span style="background: #43e97b; color: white; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; margin-left: 8px;">FOOD</span>'
-                    : '<span style="background: #667eea; color: white; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; margin-left: 8px;">MEAL</span>';
+                    ? '<span style="background: #43e97b; color: white; padding: 3px 8px; border-radius: 4px; font-size: 0.7rem; margin-left: 6px;">FOOD</span>'
+                    : '<span style="background: #667eea; color: white; padding: 3px 8px; border-radius: 4px; font-size: 0.7rem; margin-left: 6px;">MEAL</span>';
 
-                return `
-                    <div class="day-meal-item">
-                        <div class="meal-item-header">
-                            <div>
-                                <span class="meal-food-name">${displayName}</span>
-                                ${typeBadge}
-                            </div>
-                            <button class="btn btn-danger" onclick="removeMealFromDay(${item.id})">Remove</button>
-                        </div>
-                        
-                        <div style="margin-bottom: 12px;">
-                            <div class="portion-controls">
-                                <div class="portion-input">
-                                    <input type="number" value="${amount}" step="0.1" min="0.1" 
-                                        onchange="updateDayMealAmount(${item.id}, this.value)" ${itemType === 'food' ? 'disabled' : ''}>
-                                    <select onchange="updateDayMealUnit(${item.id}, this.value)" ${itemType === 'food' ? 'disabled' : ''}>
-                                        <option value="serving" ${unit === 'serving' ? 'selected' : ''}>servings</option>
-                                        <option value="g" ${unit === 'g' ? 'selected' : ''}>g</option>
-                                        <option value="oz" ${unit === 'oz' ? 'selected' : ''}>oz</option>
-                                        <option value="lb" ${unit === 'lb' ? 'selected' : ''}>lb</option>
-                                        <option value="cup" ${unit === 'cup' ? 'selected' : ''}>cup</option>
-                                        <option value="tbsp" ${unit === 'tbsp' ? 'selected' : ''}>tbsp</option>
-                                        <option value="tsp" ${unit === 'tsp' ? 'selected' : ''}>tsp</option>
-                                        <option value="piece" ${unit === 'piece' ? 'selected' : ''}>piece</option>
-                                    </select>
-                                </div>
-                            </div>
-                            ${itemType === 'food' ? '<small style="color: #999;">Individual food amounts are fixed</small>' : ''}
-                        </div>
+                // Alternate row colors
+                const rowBg = index % 2 === 0 ? '#f8f9fa' : 'white';
 
-                        <div class="macro-display">
-                            <div class="macro-item">
-                                <div class="macro-label">Protein</div>
-                                <div class="macro-value">${protein}g</div>
+                tableHTML += `
+                    <tr style="background: ${rowBg}; border-bottom: 1px solid #e0e0e0;">
+                        <td style="padding: 12px; font-weight: 600; color: #333;">
+                            ${displayName}${typeBadge}
+                        </td>
+                        <td style="padding: 12px; text-align: center;">
+                            <div style="display: flex; gap: 4px; justify-content: center; align-items: center;">
+                                <input type="number" value="${amount}" step="0.1" min="0.1" 
+                                    style="width: 60px; padding: 4px; border: 1px solid #ddd; border-radius: 4px; text-align: center;"
+                                    onchange="updateDayMealAmount(${item.id}, this.value)" ${itemType === 'food' ? 'disabled' : ''}>
+                                <select onchange="updateDayMealUnit(${item.id}, this.value)" 
+                                    style="padding: 4px; border: 1px solid #ddd; border-radius: 4px; font-size: 0.85rem;"
+                                    ${itemType === 'food' ? 'disabled' : ''}>
+                                    <option value="serving" ${unit === 'serving' ? 'selected' : ''}>srv</option>
+                                    <option value="g" ${unit === 'g' ? 'selected' : ''}>g</option>
+                                    <option value="oz" ${unit === 'oz' ? 'selected' : ''}>oz</option>
+                                    <option value="lb" ${unit === 'lb' ? 'selected' : ''}>lb</option>
+                                    <option value="cup" ${unit === 'cup' ? 'selected' : ''}>cup</option>
+                                    <option value="tbsp" ${unit === 'tbsp' ? 'selected' : ''}>tbsp</option>
+                                    <option value="tsp" ${unit === 'tsp' ? 'selected' : ''}>tsp</option>
+                                    <option value="piece" ${unit === 'piece' ? 'selected' : ''}>pc</option>
+                                </select>
                             </div>
-                            <div class="macro-item">
-                                <div class="macro-label">Carbs</div>
-                                <div class="macro-value">${carbs}g</div>
-                            </div>
-                            <div class="macro-item">
-                                <div class="macro-label">Fats</div>
-                                <div class="macro-value">${fats}g</div>
-                            </div>
-                            <div class="macro-item">
-                                <div class="macro-label">Calories</div>
-                                <div class="macro-value">${calories}</div>
-                            </div>
-                        </div>
-                        <div style="text-align: center; margin-top: 8px; font-size: 0.9rem; color: #666;"><strong>Fiber:</strong> ${fiber}g</div>
-                    </div>
+                        </td>
+                        <td style="padding: 12px; text-align: center; font-weight: 600; color: #667eea;">${protein}g</td>
+                        <td style="padding: 12px; text-align: center; font-weight: 600; color: #f093fb;">${carbs}g</td>
+                        <td style="padding: 12px; text-align: center; font-weight: 600; color: #43e97b;">${fats}g</td>
+                        <td style="padding: 12px; text-align: center; color: #666;">${fiber}g</td>
+                        <td style="padding: 12px; text-align: center; font-weight: 700; font-size: 1.1rem; color: #333;">${calories}</td>
+                        <td style="padding: 12px; text-align: center;">
+                            <button class="btn btn-danger" onclick="removeMealFromDay(${item.id})" 
+                                style="padding: 6px 12px; font-size: 0.8rem;">✕</button>
+                        </td>
+                    </tr>
                 `;
-            }).join('');
+            });
 
+            tableHTML += `
+                    </tbody>
+                </table>
+            `;
+
+            listDiv.innerHTML = tableHTML;
             calculateDayTotals();
         }
 
