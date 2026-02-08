@@ -5,15 +5,32 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Macro Calculator</title>
     
-    <!-- PWA / Home Screen Icon Support -->
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="manifest.json">
+    
+    <!-- iOS Meta Tags -->
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Macros">
-    <meta name="theme-color" content="#2c5282">
     
-    <!-- App Icon - Base64 encoded PNG -->
-    <link rel="apple-touch-icon" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAALQAAAC0CAYAAAA9zQYyAAAACXBIWXMAAAsTAAALEwEAmpwYAAADzklEQVR4nO3dS27bMBSAYbVAD9CepgfoqboO9AQ9Rk/VXmDSVQro0kVRFLZlS+aT+H+AV1tJSD4fKVKiJAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABg39R9AKhLCCGllG611nPO+RJjfJJSPkgpH5fLZb1er5+UUo9a60kp9ay1Xv/+vZTy1fd9dx8Pjksptr/bbrfrbrf7EkJ4V0p9k1JeY4yvMcaP+Xz+sVwuP7fbbb3dbust0pn89Lqu6+VyWaPy67run1LKW4zxfT6fv87n86fVavVFKXWdz+f1er2+3qJOpJ+4lFLfbrfVfT6f1+12O/jP15zzq9b6u5TyEkJ4m06nZ6XU13g9yE8mkx+TyeRdSvkRQnhbLBZfY4yvUsoPrfX3nPMlpfQqpVSPPYY+46/HwGu1Wo0554MxjvHvfy6lbJRSb0qpd6XUe875GmO8ppSuOedrCOH6d/S/Xq/XGONVKfUeY/yhlHrXWr0ppTZa66M/C0mMMWZjzPb+/v7hfr//sNvtxv/Pfr/fGGOMw+Hw+TF+v1uMMQ6HwzHGeBwOh48xxo/dbncMIfzcbrdj3/c7Y4wdGxtnY8xxs9mMfd/vttttX7SxMcbjZrOp7uP5Mcb42B/mcIwxHo0xP2OMx+12W93Hc2OMOff9bmeM2e33+2qM2fd9v9vtdhv7d2OMudvt+vt4fowx+91ud1oul//tKfb7/W4+n//7//d9v6v//v1+vy3RdvH4bvtfsMb+eXf/PJ/PR/fP+75f3T+PM8bs53a7re7v7o0x+6L9v6qibbfb+t/Hfr/fFm2/3/+3x2i73db7fv7c/bP750P/zL/fXf98t9vttt3vtp8x+6L9v6qiLRaL/z4Wi0XR7o9xv991v+/+GF3/fHd/jK5/ftftdjt0uyvadrv9b7tdtO12+++ettvttt1ut+12267b7Xbo9lW0xWLx38disej0z9tt0e1227XbbbtFt9t23eKzL9p2u/1vu120+2N03W7X/bG77o/Rdb/bbovP/vjP/bH77o/dF+2x77av7vOp+2d3RVssFv99LBaLTv/8btH9s7vFZ1+0+/fb9Xq9bvdZFO1+v+v+2H3RjDFH989u0f2z++KzP/5zf+y+++0Wxfvt+j6fuj921+uife2P3RdtvV7/97FeL4r22Pdb988uit1ud+h+u+7+2UWx3++P3W/Xbb9fFe/9Hvo+n7p/drfY7Xad/vndxX4/X/T7fdf377b97Xr97Xrf/XZ9f79df7vFfr/v+n7X93223+9X99u1i91ud3D/7O7+2P9+u+73f+gWi8Wh+/1f7XbdP7t7/MXNAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACQxV+LNMQWWzyGbgAAAABJRU5ErkJggg==">
-    <link rel="icon" type="image/png" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAALQAAAC0CAYAAAA9zQYyAAAACXBIWXMAAAsTAAALEwEAmpwYAAADzklEQVR4nO3dS27bMBSAYbVAD9CepgfoqboO9AQ9Rk/VXmDSVQro0kVRFLZlS+aT+H+AV1tJSD4fKVKiJAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABg39R9AKhLCCGllG611nPO+RJjfJJSPkgpH5fLZb1er5+UUo9a60kp9ay1Xv/+vZTy1fd9dx8Pjksptr/bbrfrbrf7EkJ4V0p9k1JeY4yvMcaP+Xz+sVwuP7fbbb3dbust0pn89Lqu6+VyWaPy67run1LKW4zxfT6fv87n86fVavVFKXWdz+f1er2+3qJOpJ+4lFLfbrfVfT6f1+12O/jP15zzq9b6u5TyEkJ4m06nZ6XU13g9yE8mkx+TyeRdSvkRQnhbLBZfY4yvUsoPrfX3nPMlpfQqpVSPPYY+46/HwGu1Wo0554MxjvHvfy6lbJRSb0qpd6XUe875GmO8ppSuOedrCOH6d/S/Xq/XGONVKfUeY/yhlHrXWr0ppTZa66M/C0mMMWZjzPb+/v7hfr//sNvtxv/Pfr/fGGOMw+Hw+TF+v1uMMQ6Hw2c9Hu53ixHGOBwOx8VicYwxHg+Hw8cY42exWBxDCMef4/dxjDEeh8PhYzgcPo6Hw+EYY4zD4XAMIRx/jt/HMcZ4HA6Hj+FwOB6Px+Px7+/Dbrfb7ff7XQjhYzgcjsPhcPw5fh/HGOO42+12u91udzgcDsdhOByOx+Px+HP8Po4xxvFwOBx3u93ucDgcDrv7Z+Pj42Pc7/e74XA4HobD4XAcDofj4XA4Ho/H4+FwOBwPh8PxcDgcD4fD4Xg4HI7D4XA8Ho/H4+FwOB4Oh+PxeDweDofj4XA4Hv/94/F4PO52u91+v98d9vv9br/f7/b7/W6/3+/2+/1uv9/v9vv9br/f7/b7/W6/3+/2+/1uv9/v9vv9br/f73a73e5wOBwO+/1+dzgcDof7Z+Pj4+OxWCw+u91ut9/vd/v9frfb7Xb7/X6322632+12u91ut9vtdrvdbrfb7Xa73W6321W73e6w2+0Ou91ut9vtdrvdbrfb7Xa73W6321W73W632+12u91ut9vtdrvdbrfb7Xa73W6321W73W6321W73a7a7XbVbrerdrv9v8/dbrerdrtdtdvtqt1uV+12u2q321W73a7a7XbVbrerdrtdtdvtqt1uV+12u2q321W73a7a7XbVbrerdrv9v8/dblftdrtqt9tVu92u2u121W63q3a7XbXb7ardblftdrtqt9tVu92u2u121W63q3a7XbXb7ardblftdrtqt9v/+9ztdtVut6t2u1212+2q3W5X/fqLmwEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACQxV+LNMQWWzyGbgAAAABJRU5ErkJggg==">
+    <!-- Theme Colors -->
+    <meta name="theme-color" content="#2c5282">
+    <meta name="msapplication-TileColor" content="#2c5282">
+    
+    <!-- Favicons for browsers/bookmarks -->
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+    <link rel="icon" type="image/png" sizes="64x64" href="favicon-64.png">
+    
+    <!-- Apple Touch Icons (iOS home screen) -->
+    <link rel="apple-touch-icon" sizes="180x180" href="icon-180.png">
+    
+    <!-- Android/Chrome Icons -->
+    <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+    <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
+    
+    <!-- Safari Pinned Tab Icon (optional) -->
+    <link rel="mask-icon" href="icon-180.png" color="#2c5282">
     
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
