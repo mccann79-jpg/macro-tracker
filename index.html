@@ -5,6 +5,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Macro Calculator</title>
     
+    <!-- PWA / Home Screen Icon Support -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Macros">
+    <meta name="theme-color" content="#2c5282">
+    
+    <!-- App Icon (embedded as data URL) -->
+    <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'><defs><linearGradient id='grad' x1='0%25' y1='0%25' x2='100%25' y2='100%25'><stop offset='0%25' style='stop-color:%231e3a5f;stop-opacity:1'/><stop offset='100%25' style='stop-color:%232c5282;stop-opacity:1'/></linearGradient></defs><rect width='180' height='180' fill='url(%23grad)'/><circle cx='90' cy='70' r='35' fill='%233b82f6' opacity='0.9'/><circle cx='65' cy='115' r='25' fill='%23f59e0b' opacity='0.9'/><circle cx='115' cy='115' r='25' fill='%2310b981' opacity='0.9'/><text x='90' y='150' font-family='Arial,sans-serif' font-size='20' font-weight='bold' fill='white' text-anchor='middle'>MACROS</text></svg>">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'><defs><linearGradient id='grad' x1='0%25' y1='0%25' x2='100%25' y2='100%25'><stop offset='0%25' style='stop-color:%231e3a5f;stop-opacity:1'/><stop offset='100%25' style='stop-color:%232c5282;stop-opacity:1'/></linearGradient></defs><rect width='180' height='180' fill='url(%23grad)'/><circle cx='90' cy='70' r='35' fill='%233b82f6' opacity='0.9'/><circle cx='65' cy='115' r='25' fill='%23f59e0b' opacity='0.9'/><circle cx='115' cy='115' r='25' fill='%2310b981' opacity='0.9'/><text x='90' y='150' font-family='Arial,sans-serif' font-size='20' font-weight='bold' fill='white' text-anchor='middle'>MACROS</text></svg>">
+    
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
