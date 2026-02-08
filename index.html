@@ -14,6 +14,7 @@
             margin: 0;
             padding: 0;
             box-sizing: border-box;
+            max-width: 100%;
         }
 
         body {
@@ -21,11 +22,13 @@
             background: linear-gradient(135deg, #1e3a5f 0%, #2c5282 100%);
             min-height: 100vh;
             padding: 20px;
+            overflow-x: hidden;
         }
 
         .container {
             max-width: 1200px;
             margin: 0 auto;
+            overflow-x: hidden;
         }
 
         h1 {
@@ -358,6 +361,10 @@
         }
 
         @media (max-width: 768px) {
+            body {
+                padding: 10px !important;
+            }
+            
             .main-grid {
                 grid-template-columns: 1fr;
             }
@@ -454,6 +461,50 @@
             .portion-input select {
                 font-size: 0.75rem !important;
             }
+            
+            /* Food Database page specific fixes */
+            .form-group label {
+                font-size: 0.9rem;
+                word-break: break-word;
+            }
+            
+            .form-group small {
+                font-size: 0.75rem !important;
+                display: block;
+                word-break: break-word;
+            }
+            
+            .form-group input,
+            .form-group select {
+                font-size: 0.9rem !important;
+                max-width: 100%;
+            }
+            
+            /* Prevent long text overflow */
+            label, small, p {
+                word-wrap: break-word;
+                overflow-wrap: break-word;
+            }
+            
+            /* Make select dropdowns shorter text */
+            #servingUnit option {
+                font-size: 0.85rem;
+            }
+            
+            /* Card titles on mobile */
+            .card h2 {
+                font-size: 1.2rem !important;
+            }
+            
+            /* Reduce card padding on mobile */
+            .card {
+                padding: 16px !important;
+            }
+            
+            /* Make form buttons full width on mobile */
+            .btn {
+                font-size: 0.9rem !important;
+            }
         }
     </style>
 </head>
@@ -513,19 +564,19 @@
                             <div class="form-row">
                                 <input type="number" id="servingAmount" step="0.1" required min="0.1" placeholder="1">
                                 <select id="servingUnit" required>
-                                    <option value="g">grams (g)</option>
-                                    <option value="oz">ounces (oz)</option>
-                                    <option value="lb">pounds (lb)</option>
+                                    <option value="g">g</option>
+                                    <option value="oz">oz</option>
+                                    <option value="lb">lb</option>
                                     <option value="cup">cup</option>
-                                    <option value="tbsp">tablespoon</option>
-                                    <option value="tsp">teaspoon</option>
-                                    <option value="ml">milliliters (ml)</option>
-                                    <option value="fl_oz">fluid oz</option>
-                                    <option value="piece">piece/item</option>
+                                    <option value="tbsp">tbsp</option>
+                                    <option value="tsp">tsp</option>
+                                    <option value="ml">ml</option>
+                                    <option value="fl_oz">fl oz</option>
+                                    <option value="piece">piece</option>
                                     <option value="serving">serving</option>
                                 </select>
                             </div>
-                            <small style="color: #666; font-size: 0.85rem;">Nutrition facts will be per this serving size</small>
+                            <small style="color: #666; font-size: 0.85rem;">Nutrition facts per serving size</small>
                         </div>
 
                         <div class="form-group">
@@ -549,9 +600,9 @@
                         </div>
 
                         <div class="form-group">
-                            <label for="calories">Calories <span style="font-weight: normal; color: #999;">(optional - auto-calculated if blank)</span></label>
-                            <input type="number" id="calories" step="1" min="0" placeholder="Leave blank to auto-calculate">
-                            <small style="color: #666; font-size: 0.85rem;">Auto-calc: (Protein × 4) + (Carbs × 4) + (Fats × 9)</small>
+                            <label for="calories">Calories <span style="font-weight: normal; color: #999;">(optional)</span></label>
+                            <input type="number" id="calories" step="1" min="0" placeholder="Auto-calculated if blank">
+                            <small style="color: #666; font-size: 0.85rem;">Auto: (P × 4) + (C × 4) + (F × 9)</small>
                         </div>
 
                         <button type="submit" class="btn" id="submitFoodBtn">Add to Database</button>
@@ -652,9 +703,12 @@
                     <div style="display: grid; grid-template-columns: 3fr 1fr; gap: 10px;">
                         <div class="form-group" style="margin-bottom: 0;">
                             <label for="selectFoodForMeal">Add Food to Meal</label>
-                            <input type="text" id="selectFoodForMeal" list="foodListMeal" placeholder="Search or select a food..." 
-                                style="width: 100%; padding: 10px 12px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 1rem;">
-                            <datalist id="foodListMeal"></datalist>
+                            <input type="text" id="searchFoodForMeal" placeholder="Search foods..." 
+                                style="width: 100%; padding: 10px 12px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 1rem; margin-bottom: 8px;"
+                                onkeyup="filterMealFoodDropdown()">
+                            <select id="selectFoodForMeal" size="5" style="width: 100%; padding: 8px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 0.9rem;">
+                                <option value="">Choose a food...</option>
+                            </select>
                         </div>
                         <div style="display: flex; align-items: flex-end;">
                             <button type="button" class="btn" id="addToMealBuilder" style="width: 100%;">+ Add</button>
@@ -730,9 +784,12 @@
                 <div id="mealSelectSection">
                     <div class="form-group">
                         <label for="selectMealForDay">Select Saved Meal</label>
-                        <input type="text" id="selectMealForDay" list="mealListDay" placeholder="Search or select a meal..." 
-                            style="width: 100%; padding: 10px 12px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 1rem;">
-                        <datalist id="mealListDay"></datalist>
+                        <input type="text" id="searchMealForDay" placeholder="Search meals..." 
+                            style="width: 100%; padding: 10px 12px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 1rem; margin-bottom: 8px;"
+                            onkeyup="filterDayMealDropdown()">
+                        <select id="selectMealForDay" size="5" style="width: 100%; padding: 8px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 0.9rem;">
+                            <option value="">Choose a meal...</option>
+                        </select>
                     </div>
 
                     <div class="form-group">
@@ -759,9 +816,12 @@
                 <div id="foodSelectSection" style="display: none;">
                     <div class="form-group">
                         <label for="selectFoodForDay">Select Food</label>
-                        <input type="text" id="selectFoodForDay" list="foodListDay" placeholder="Search or select a food..." 
-                            style="width: 100%; padding: 10px 12px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 1rem;">
-                        <datalist id="foodListDay"></datalist>
+                        <input type="text" id="searchFoodForDay" placeholder="Search foods..." 
+                            style="width: 100%; padding: 10px 12px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 1rem; margin-bottom: 8px;"
+                            onkeyup="filterDayFoodDropdown()">
+                        <select id="selectFoodForDay" size="5" style="width: 100%; padding: 8px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 0.9rem;">
+                            <option value="">Choose a food...</option>
+                        </select>
                     </div>
 
                     <div class="form-group">
@@ -1206,13 +1266,35 @@
             // Sort foods alphabetically by name
             const sortedFoods = [...foodDatabase].sort((a, b) => a.name.localeCompare(b.name));
             
-            const datalist = document.getElementById('foodListMeal');
-            datalist.innerHTML = sortedFoods.map(food => 
-                `<option value="${food.name}" data-id="${food.id}">${food.name}</option>`
-            ).join('');
+            const select = document.getElementById('selectFoodForMeal');
+            select.innerHTML = '<option value="">Choose a food...</option>' +
+                sortedFoods.map(food => 
+                    `<option value="${food.name}">${food.name}</option>`
+                ).join('');
             
             // Also update day page selector
             updateDayFoodSelector();
+        }
+
+        function filterMealFoodDropdown() {
+            const searchInput = document.getElementById('searchFoodForMeal').value.toLowerCase();
+            const select = document.getElementById('selectFoodForMeal');
+            const options = select.querySelectorAll('option');
+            
+            options.forEach(option => {
+                const foodName = option.value.toLowerCase();
+                if (foodName === '' || foodName.includes(searchInput)) {
+                    option.style.display = '';
+                } else {
+                    option.style.display = 'none';
+                }
+            });
+            
+            // Auto-select first visible option if only one match
+            const visibleOptions = Array.from(options).filter(opt => opt.style.display !== 'none' && opt.value !== '');
+            if (visibleOptions.length === 1) {
+                select.value = visibleOptions[0].value;
+            }
         }
 
         function addFoodToMealBuilder() {
@@ -1234,8 +1316,10 @@
             renderMealBuilder();
             calculateMealTotals();
             
-            // Reset the input
+            // Reset the dropdown and search
             document.getElementById('selectFoodForMeal').value = '';
+            document.getElementById('searchFoodForMeal').value = '';
+            filterMealFoodDropdown(); // Reset filter
         }
 
         function removeFoodFromBuilder(builderId) {
@@ -1512,20 +1596,64 @@
             // Sort meals alphabetically by name
             const sortedMeals = [...savedMeals].sort((a, b) => a.name.localeCompare(b.name));
             
-            const datalist = document.getElementById('mealListDay');
-            datalist.innerHTML = sortedMeals.map(meal => 
-                `<option value="${meal.name}" data-id="${meal.id}">${meal.name}</option>`
-            ).join('');
+            const select = document.getElementById('selectMealForDay');
+            select.innerHTML = '<option value="">Choose a meal...</option>' +
+                sortedMeals.map(meal => 
+                    `<option value="${meal.name}">${meal.name}</option>`
+                ).join('');
+        }
+
+        function filterDayMealDropdown() {
+            const searchInput = document.getElementById('searchMealForDay').value.toLowerCase();
+            const select = document.getElementById('selectMealForDay');
+            const options = select.querySelectorAll('option');
+            
+            options.forEach(option => {
+                const mealName = option.value.toLowerCase();
+                if (mealName === '' || mealName.includes(searchInput)) {
+                    option.style.display = '';
+                } else {
+                    option.style.display = 'none';
+                }
+            });
+            
+            // Auto-select first visible option if only one match
+            const visibleOptions = Array.from(options).filter(opt => opt.style.display !== 'none' && opt.value !== '');
+            if (visibleOptions.length === 1) {
+                select.value = visibleOptions[0].value;
+            }
         }
 
         function updateDayFoodSelector() {
             // Sort foods alphabetically by name
             const sortedFoods = [...foodDatabase].sort((a, b) => a.name.localeCompare(b.name));
             
-            const datalist = document.getElementById('foodListDay');
-            datalist.innerHTML = sortedFoods.map(food => 
-                `<option value="${food.name}" data-id="${food.id}">${food.name}</option>`
-            ).join('');
+            const select = document.getElementById('selectFoodForDay');
+            select.innerHTML = '<option value="">Choose a food...</option>' +
+                sortedFoods.map(food => 
+                    `<option value="${food.name}">${food.name}</option>`
+                ).join('');
+        }
+
+        function filterDayFoodDropdown() {
+            const searchInput = document.getElementById('searchFoodForDay').value.toLowerCase();
+            const select = document.getElementById('selectFoodForDay');
+            const options = select.querySelectorAll('option');
+            
+            options.forEach(option => {
+                const foodName = option.value.toLowerCase();
+                if (foodName === '' || foodName.includes(searchInput)) {
+                    option.style.display = '';
+                } else {
+                    option.style.display = 'none';
+                }
+            });
+            
+            // Auto-select first visible option if only one match
+            const visibleOptions = Array.from(options).filter(opt => opt.style.display !== 'none' && opt.value !== '');
+            if (visibleOptions.length === 1) {
+                select.value = visibleOptions[0].value;
+            }
         }
 
         function setDayAddType(type) {
@@ -1625,7 +1753,9 @@
             
             // Reset inputs
             document.getElementById('selectFoodForDay').value = '';
+            document.getElementById('searchFoodForDay').value = '';
             document.getElementById('foodAmountForDay').value = '1';
+            filterDayFoodDropdown(); // Reset filter
         }
 
         function addMealToDay() {
@@ -1657,7 +1787,9 @@
             
             // Reset inputs
             document.getElementById('selectMealForDay').value = '';
+            document.getElementById('searchMealForDay').value = '';
             document.getElementById('mealServingsForDay').value = '1';
+            filterDayMealDropdown(); // Reset filter
         }
 
         function removeMealFromDay(id) {
