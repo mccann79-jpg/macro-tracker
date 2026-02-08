@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Macro Calculator</title>
     
     <!-- Firebase SDK -->
@@ -374,6 +374,86 @@
             .navigation {
                 flex-direction: column;
             }
+            
+            /* Make tables horizontally scrollable on mobile */
+            .food-list, #savedMealsList, #dayMealsList {
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+            
+            /* Prevent table content from wrapping */
+            table {
+                min-width: 600px;
+            }
+            
+            /* Smaller text on mobile tables */
+            table {
+                font-size: 0.8rem !important;
+            }
+            
+            table th, table td {
+                padding: 6px 4px !important;
+                white-space: nowrap;
+            }
+            
+            /* Compact buttons on mobile */
+            .btn-success, .btn-danger {
+                padding: 3px 6px !important;
+                font-size: 0.75rem !important;
+            }
+            
+            /* Stack PIN overlay buttons vertically on mobile */
+            #pinOverlay > div {
+                padding: 20px !important;
+            }
+            
+            /* Smaller meal builder table */
+            #mealBuilderTableBody input[type="number"],
+            #mealBuilderTableBody select {
+                font-size: 0.75rem !important;
+                padding: 4px !important;
+            }
+            
+            /* Adjust daily totals for mobile */
+            .total-macros h2 {
+                font-size: 1.2rem;
+            }
+            
+            .total-value {
+                font-size: 2rem !important;
+            }
+            
+            .total-label {
+                font-size: 0.75rem;
+            }
+            
+            /* Make clear/undo buttons stack on very small screens */
+            @media (max-width: 400px) {
+                .total-macros > div:first-child {
+                    flex-direction: column !important;
+                    gap: 10px;
+                }
+                
+                .total-macros > div:first-child > div {
+                    width: 100%;
+                    flex-direction: column !important;
+                }
+                
+                #clearDayBtn, #undoClearBtn {
+                    width: 100% !important;
+                }
+            }
+            
+            /* Portion controls in day meals table */
+            .portion-input {
+                flex-direction: column !important;
+                gap: 4px;
+            }
+            
+            .portion-input input,
+            .portion-input select {
+                font-size: 0.75rem !important;
+            }
         }
     </style>
 </head>
@@ -481,11 +561,11 @@
 
                 <!-- Food List Section -->
                 <div class="card">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px;">
                         <h2 style="margin-bottom: 0;">My Foods</h2>
-                        <div style="display: flex; gap: 8px;">
-                            <button type="button" class="btn btn-success" onclick="exportFoodDatabase()" style="padding: 8px 16px; font-size: 0.9rem;">⬇ Export CSV</button>
-                            <button type="button" class="btn btn-success" onclick="document.getElementById('importFileInput').click()" style="padding: 8px 16px; font-size: 0.9rem;">⬆ Import CSV</button>
+                        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                            <button type="button" class="btn btn-success" onclick="exportFoodDatabase()" style="padding: 8px 12px; font-size: 0.85rem; white-space: nowrap;">⬇ Export</button>
+                            <button type="button" class="btn btn-success" onclick="document.getElementById('importFileInput').click()" style="padding: 8px 12px; font-size: 0.85rem; white-space: nowrap;">⬆ Import</button>
                             <input type="file" id="importFileInput" accept=".csv" style="display: none;" onchange="importFoodDatabase(event)">
                         </div>
                     </div>
@@ -497,7 +577,9 @@
                             onkeyup="filterFoodList()">
                     </div>
                     
-                    <div class="food-list" id="foodList" style="max-height: 600px;"></div>
+                    <div style="overflow-x: auto; -webkit-overflow-scrolling: touch;">
+                        <div class="food-list" id="foodList" style="max-height: 600px;"></div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -521,7 +603,7 @@
                 </div>
 
                 <!-- Meal Builder Table -->
-                <div style="overflow-x: auto;">
+                <div style="overflow-x: auto; -webkit-overflow-scrolling: touch;">
                     <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
                         <thead>
                             <tr style="background: #2c5282; color: white;">
@@ -590,7 +672,9 @@
             <!-- Saved Meals Section -->
             <div class="card">
                 <h2>Saved Meals</h2>
-                <div id="savedMealsList"></div>
+                <div style="overflow-x: auto; -webkit-overflow-scrolling: touch;">
+                    <div id="savedMealsList"></div>
+                </div>
             </div>
         </div>
 
@@ -598,11 +682,11 @@
         <div id="dayPage" class="page">
             <!-- Day Totals at Top -->
             <div class="total-macros" style="margin-bottom: 20px;">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px;">
                     <h2 style="margin: 0;">Daily Totals</h2>
-                    <div style="display: flex; gap: 8px;">
-                        <button type="button" class="btn btn-danger" id="clearDayBtn" onclick="clearDay()" style="padding: 8px 16px; font-size: 0.9rem; width: auto;">Clear Day</button>
-                        <button type="button" class="btn btn-success" id="undoClearBtn" onclick="undoClear()" style="padding: 8px 16px; font-size: 0.9rem; width: auto; display: none;">Undo Clear</button>
+                    <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                        <button type="button" class="btn btn-danger" id="clearDayBtn" onclick="clearDay()" style="padding: 8px 12px; font-size: 0.85rem; width: auto; white-space: nowrap;">Clear Day</button>
+                        <button type="button" class="btn btn-success" id="undoClearBtn" onclick="undoClear()" style="padding: 8px 12px; font-size: 0.85rem; width: auto; display: none; white-space: nowrap;">Undo Clear</button>
                     </div>
                 </div>
                 <div class="total-grid">
@@ -705,7 +789,9 @@
 
             <div class="card">
                 <h2>Today's Meals</h2>
-                <div id="dayMealsList"></div>
+                <div style="overflow-x: auto; -webkit-overflow-scrolling: touch;">
+                    <div id="dayMealsList"></div>
+                </div>
             </div>
         </div>
     </div>
