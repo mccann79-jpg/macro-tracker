@@ -1060,6 +1060,27 @@
             <!-- Weight Chart -->
             <div class="card" style="margin-bottom: 20px;">
                 <h2>Weight Trends</h2>
+                
+                <!-- Goal Weight Section -->
+                <div style="background: #f8f9fa; padding: 16px; border-radius: 8px; margin-bottom: 20px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
+                        <div style="flex: 1; min-width: 200px;">
+                            <label style="font-weight: 600; color: #2c5282; margin-bottom: 8px; display: block;">Goal Weight (lb)</label>
+                            <div style="display: flex; gap: 10px; align-items: center;">
+                                <input type="number" id="goalWeight" step="0.1" placeholder="e.g., 185" style="flex: 1; padding: 10px 12px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 1rem;">
+                                <button type="button" class="btn" onclick="setGoalWeight()" style="padding: 10px 20px; white-space: nowrap;">Set Goal</button>
+                                <button type="button" class="btn btn-danger" onclick="clearGoalWeight()" style="padding: 10px 20px; white-space: nowrap;">Clear</button>
+                            </div>
+                        </div>
+                        <div id="goalProjection" style="display: none; flex: 1; min-width: 300px; padding: 16px; background: white; border-radius: 8px; border: 2px solid #10b981;">
+                            <div style="font-size: 0.9rem; color: #666; margin-bottom: 8px;">Based on your trend:</div>
+                            <div style="font-size: 1.3rem; font-weight: 700; color: #10b981; margin-bottom: 4px;" id="projectedDate">March 15, 2026</div>
+                            <div style="font-size: 0.95rem; color: #666;" id="projectedDays">35 days from now</div>
+                            <div style="font-size: 0.85rem; color: #999; margin-top: 8px;" id="trendRate">Trend: -0.15 lb/day</div>
+                        </div>
+                    </div>
+                </div>
+
                 <div style="margin-bottom: 15px;">
                     <label style="display: inline-flex; align-items: center; margin-right: 20px; cursor: pointer;">
                         <input type="checkbox" id="showMorningWeight" checked onchange="drawWeightChart()" style="margin-right: 5px;">
@@ -1068,6 +1089,10 @@
                     <label style="display: inline-flex; align-items: center; margin-right: 20px; cursor: pointer;">
                         <input type="checkbox" id="showWeeklyAvg" checked onchange="drawWeightChart()" style="margin-right: 5px;">
                         <span style="color: #10b981; font-weight: 600;">7-Day Average</span>
+                    </label>
+                    <label style="display: inline-flex; align-items: center; margin-right: 20px; cursor: pointer;">
+                        <input type="checkbox" id="showTrendLine" checked onchange="drawWeightChart()" style="margin-right: 5px;">
+                        <span style="color: #dc2626; font-weight: 600;">Trend Line</span>
                     </label>
                     <label style="display: inline-flex; align-items: center; cursor: pointer;">
                         <input type="checkbox" id="showCalories" onchange="drawWeightChart()" style="margin-right: 5px;">
@@ -1158,6 +1183,7 @@
         let dailyGoals = JSON.parse(localStorage.getItem('dailyGoals')) || null;
         let dayHistory = JSON.parse(localStorage.getItem('dayHistory')) || [];
         let weightData = JSON.parse(localStorage.getItem('weightData')) || [];
+        let goalWeight = localStorage.getItem('goalWeight') ? parseFloat(localStorage.getItem('goalWeight')) : null;
 
         // PIN and Firebase Sync Functions
         function showPinOverlay() {
@@ -1340,6 +1366,7 @@
             drawHistoryChart(); // Draw history chart
             renderWeightTable(); // Display weight data
             drawWeightChart(); // Draw weight chart
+            loadGoalWeight(); // Load goal weight if set
             
             // Set today's date as default
             document.getElementById('weightDate').value = new Date().toISOString().split('T')[0];
@@ -3058,6 +3085,9 @@
                     </tr>
                 `;
             }).join('');
+
+            // Recalculate projection after table renders
+            calculateProjection();
         }
 
         function drawWeightChart() {
@@ -3065,6 +3095,7 @@
             const ctx = canvas.getContext('2d');
             const showMorning = document.getElementById('showMorningWeight').checked;
             const showWeekly = document.getElementById('showWeeklyAvg').checked;
+            const showTrendLine = document.getElementById('showTrendLine').checked;
             const showCalories = document.getElementById('showCalories').checked;
 
             // Clear canvas
@@ -3287,6 +3318,56 @@
                         ctx.fill();
                     }
                 });
+            }
+
+            // Calculate and draw trend line
+            if (showTrendLine) {
+                const validWeights = sortedData
+                    .map((e, index) => ({ weight: e.morningWeight, index }))
+                    .filter(e => e.weight);
+
+                if (validWeights.length >= 2) {
+                    const regression = calculateLinearRegression(validWeights);
+                    if (regression) {
+                        const { slope, intercept } = regression;
+
+                        // Draw trend line
+                        ctx.strokeStyle = '#dc2626';
+                        ctx.lineWidth = 2;
+                        ctx.setLineDash([5, 5]);
+                        ctx.beginPath();
+
+                        // Calculate trend values for first and last points
+                        const firstIndex = 0;
+                        const lastIndex = sortedData.length - 1;
+                        const firstTrendWeight = intercept + slope * validWeights[0].index;
+                        const lastTrendWeight = intercept + slope * validWeights[validWeights.length - 1].index;
+
+                        ctx.moveTo(getX(validWeights[0].index), getY(firstTrendWeight));
+                        ctx.lineTo(getX(validWeights[validWeights.length - 1].index), getY(lastTrendWeight));
+                        ctx.stroke();
+                        ctx.setLineDash([]);
+                    }
+                }
+            }
+
+            // Draw goal weight line
+            if (goalWeight && allWeights.length > 0) {
+                ctx.strokeStyle = '#8b5cf6';
+                ctx.lineWidth = 2;
+                ctx.setLineDash([10, 5]);
+                ctx.beginPath();
+                const goalY = getY(goalWeight);
+                ctx.moveTo(padding, goalY);
+                ctx.lineTo(canvas.width - rightPadding, goalY);
+                ctx.stroke();
+                ctx.setLineDash([]);
+
+                // Draw goal label
+                ctx.fillStyle = '#8b5cf6';
+                ctx.font = 'bold 12px Arial';
+                ctx.textAlign = 'left';
+                ctx.fillText(`Goal: ${goalWeight} lb`, padding + 10, goalY - 5);
             }
 
             // Draw date labels (show every nth date to avoid crowding)
@@ -3518,6 +3599,122 @@
             };
 
             reader.readAsText(file);
+        }
+
+        // Goal Weight and Trend Line Functions
+        function setGoalWeight() {
+            const goal = parseFloat(document.getElementById('goalWeight').value);
+            if (!goal || goal <= 0) {
+                alert('Please enter a valid goal weight');
+                return;
+            }
+
+            goalWeight = goal;
+            localStorage.setItem('goalWeight', goalWeight.toString());
+            
+            calculateProjection();
+            drawWeightChart();
+        }
+
+        function clearGoalWeight() {
+            goalWeight = null;
+            localStorage.removeItem('goalWeight');
+            document.getElementById('goalWeight').value = '';
+            document.getElementById('goalProjection').style.display = 'none';
+            drawWeightChart();
+        }
+
+        function calculateLinearRegression(data) {
+            // Calculate linear regression for trend line
+            // Returns {slope, intercept}
+            if (data.length < 2) return null;
+
+            const n = data.length;
+            let sumX = 0, sumY = 0, sumXY = 0, sumX2 = 0;
+
+            data.forEach((point, index) => {
+                const x = index; // Use index as x (time)
+                const y = point.weight;
+                sumX += x;
+                sumY += y;
+                sumXY += x * y;
+                sumX2 += x * x;
+            });
+
+            const slope = (n * sumXY - sumX * sumY) / (n * sumX2 - sumX * sumX);
+            const intercept = (sumY - slope * sumX) / n;
+
+            return { slope, intercept };
+        }
+
+        function calculateProjection() {
+            if (!goalWeight || weightData.length < 2) {
+                document.getElementById('goalProjection').style.display = 'none';
+                return;
+            }
+
+            // Get weights with valid morning weights only
+            const validWeights = weightData
+                .filter(e => e.morningWeight)
+                .sort((a, b) => new Date(a.date) - new Date(b.date))
+                .map((e, index) => ({ date: e.date, weight: e.morningWeight, index }));
+
+            if (validWeights.length < 2) {
+                document.getElementById('goalProjection').style.display = 'none';
+                return;
+            }
+
+            // Calculate trend line
+            const regression = calculateLinearRegression(validWeights);
+            if (!regression) return;
+
+            const { slope, intercept } = regression;
+
+            // Get current weight (most recent)
+            const currentWeight = validWeights[validWeights.length - 1].weight;
+            const currentDate = new Date(validWeights[validWeights.length - 1].date);
+
+            // Check if goal is achievable based on trend
+            if ((goalWeight > currentWeight && slope <= 0) || (goalWeight < currentWeight && slope >= 0)) {
+                // Trend is going opposite direction
+                document.getElementById('goalProjection').style.display = 'block';
+                document.getElementById('projectedDate').textContent = 'Goal not aligned with current trend';
+                document.getElementById('projectedDate').style.color = '#dc2626';
+                document.getElementById('projectedDays').textContent = slope > 0 ? 'Weight is increasing' : 'Weight is decreasing';
+                document.getElementById('trendRate').textContent = `Trend: ${slope > 0 ? '+' : ''}${slope.toFixed(3)} lb/day`;
+                return;
+            }
+
+            // Calculate days to reach goal
+            // Current predicted weight at last index: intercept + slope * lastIndex
+            const lastIndex = validWeights.length - 1;
+            const currentPredicted = intercept + slope * lastIndex;
+            const weightDiff = goalWeight - currentPredicted;
+            const daysNeeded = Math.abs(weightDiff / slope);
+
+            const projectedDate = new Date(currentDate);
+            projectedDate.setDate(projectedDate.getDate() + Math.round(daysNeeded));
+
+            // Display projection
+            document.getElementById('goalProjection').style.display = 'block';
+            document.getElementById('projectedDate').textContent = projectedDate.toLocaleDateString('en-US', { 
+                weekday: 'long',
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric' 
+            });
+            document.getElementById('projectedDate').style.color = '#10b981';
+            
+            const daysFromNow = Math.round((projectedDate - new Date()) / (1000 * 60 * 60 * 24));
+            document.getElementById('projectedDays').textContent = `${daysFromNow} days from now (${Math.abs(currentWeight - goalWeight).toFixed(1)} lb to go)`;
+            document.getElementById('trendRate').textContent = `Trend: ${slope > 0 ? '+' : ''}${slope.toFixed(3)} lb/day (${(slope * 7).toFixed(2)} lb/week)`;
+        }
+
+        function loadGoalWeight() {
+            if (goalWeight) {
+                document.getElementById('goalWeight').value = goalWeight;
+                calculateProjection();
+            }
         }
     </script>
 </body>
