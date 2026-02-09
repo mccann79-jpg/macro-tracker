@@ -613,6 +613,7 @@
             <button class="nav-btn active" onclick="showPage('database')">Food Database</button>
             <button class="nav-btn" onclick="showPage('meals')">Create Meal</button>
             <button class="nav-btn" onclick="showPage('day')">My Day</button>
+            <button class="nav-btn" onclick="showPage('weight')">Weight</button>
         </div>
 
         <!-- Food Database Page -->
@@ -1022,6 +1023,84 @@
                 </div>
             </div>
         </div>
+
+        <!-- Weight Tracking Page -->
+        <div id="weightPage" class="page">
+            <!-- Add Weight Section -->
+            <div class="card" style="margin-bottom: 20px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px;">
+                    <h2 style="margin: 0;">Add Weight Entry</h2>
+                    <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                        <button type="button" class="btn btn-success" onclick="exportWeightData()" style="padding: 6px 12px; font-size: 0.85rem; width: auto;">⬇ Export</button>
+                        <button type="button" class="btn btn-success" onclick="document.getElementById('importWeightInput').click()" style="padding: 6px 12px; font-size: 0.85rem; width: auto;">⬆ Import</button>
+                        <input type="file" id="importWeightInput" accept=".csv" style="display: none;" onchange="importWeightData(event)">
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 15px; margin-bottom: 15px;">
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label for="weightDate">Date</label>
+                        <input type="date" id="weightDate" required>
+                    </div>
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label for="morningWeight">Morning (lb)</label>
+                        <input type="number" id="morningWeight" step="0.1" placeholder="e.g., 196.5">
+                    </div>
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label for="weeklyAvgWeight">Weekly Avg (lb)</label>
+                        <input type="number" id="weeklyAvgWeight" step="0.1" placeholder="e.g., 196.7">
+                    </div>
+                    <div style="display: flex; align-items: flex-end;">
+                        <button type="button" class="btn" onclick="addWeightEntry()" style="width: 100%;">+ Add</button>
+                    </div>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 0;">
+                    <label for="weightNotes">Notes (optional)</label>
+                    <input type="text" id="weightNotes" placeholder="e.g., creatine loading, over calories">
+                </div>
+            </div>
+
+            <!-- Weight Chart -->
+            <div class="card" style="margin-bottom: 20px;">
+                <h2>Weight Trends</h2>
+                <div style="margin-bottom: 15px;">
+                    <label style="display: inline-flex; align-items: center; margin-right: 20px; cursor: pointer;">
+                        <input type="checkbox" id="showMorningWeight" checked onchange="drawWeightChart()" style="margin-right: 5px;">
+                        <span style="color: #3b82f6; font-weight: 600;">Morning Weight</span>
+                    </label>
+                    <label style="display: inline-flex; align-items: center; cursor: pointer;">
+                        <input type="checkbox" id="showWeeklyAvg" checked onchange="drawWeightChart()" style="margin-right: 5px;">
+                        <span style="color: #10b981; font-weight: 600;">Weekly Average</span>
+                    </label>
+                </div>
+                <canvas id="weightChart" width="800" height="400" style="max-width: 100%; cursor: crosshair;"></canvas>
+                <div id="weightChartTooltip" style="position: absolute; display: none; background: rgba(0,0,0,0.8); color: white; padding: 8px; border-radius: 4px; font-size: 0.85rem; pointer-events: none; z-index: 1000;"></div>
+            </div>
+
+            <!-- Weight Data Table -->
+            <div class="card">
+                <h2>Weight Log</h2>
+                <div style="overflow-x: auto; -webkit-overflow-scrolling: touch;">
+                    <table style="width: 100%; border-collapse: collapse; font-size: 0.85rem; min-width: 700px;">
+                        <thead>
+                            <tr style="background: #2c5282; color: white;">
+                                <th style="padding: 8px; text-align: left;">Date</th>
+                                <th style="padding: 8px; text-align: center;">Morning Weight</th>
+                                <th style="padding: 8px; text-align: center;">Weekly Average</th>
+                                <th style="padding: 8px; text-align: center;">Change</th>
+                                <th style="padding: 8px; text-align: left;">Notes</th>
+                                <th style="padding: 8px; text-align: center;"></th>
+                            </tr>
+                        </thead>
+                        <tbody id="weightTableBody"></tbody>
+                    </table>
+                </div>
+                <div id="emptyWeightMessage" style="text-align: center; padding: 40px; color: #999; display: none;">
+                    No weight entries yet. Add your first entry above.
+                </div>
+            </div>
+        </div>
     </div>
 
     <script>
@@ -1078,6 +1157,7 @@
         let clearedMealsBackup = null; // For undo functionality
         let dailyGoals = JSON.parse(localStorage.getItem('dailyGoals')) || null;
         let dayHistory = JSON.parse(localStorage.getItem('dayHistory')) || [];
+        let weightData = JSON.parse(localStorage.getItem('weightData')) || [];
 
         // PIN and Firebase Sync Functions
         function showPinOverlay() {
@@ -1149,6 +1229,10 @@
                         dayHistory = data.dayHistory;
                         localStorage.setItem('dayHistory', JSON.stringify(dayHistory));
                     }
+                    if (data.weightData) {
+                        weightData = data.weightData;
+                        localStorage.setItem('weightData', JSON.stringify(weightData));
+                    }
                     
                     // Refresh UI
                     renderFoodList();
@@ -1159,6 +1243,8 @@
                     displayGoals();
                     renderHistory();
                     drawHistoryChart();
+                    renderWeightTable();
+                    drawWeightChart();
                     
                     console.log('✅ Data loaded from cloud');
                 } else {
@@ -1203,6 +1289,12 @@
                             renderHistory();
                             drawHistoryChart();
                         }
+                        if (data.weightData) {
+                            weightData = data.weightData;
+                            localStorage.setItem('weightData', JSON.stringify(weightData));
+                            renderWeightTable();
+                            drawWeightChart();
+                        }
                         localStorage.setItem('lastSync', data._lastSync.toString());
                     }
                 }
@@ -1220,6 +1312,7 @@
                 todaysMeals: todaysMeals,
                 dailyGoals: dailyGoals,
                 dayHistory: dayHistory,
+                weightData: weightData,
                 _lastSync: timestamp
             }).then(() => {
                 localStorage.setItem('lastSync', timestamp.toString());
@@ -1245,6 +1338,11 @@
             displayGoals(); // Display goals if set
             renderHistory(); // Display history
             drawHistoryChart(); // Draw history chart
+            renderWeightTable(); // Display weight data
+            drawWeightChart(); // Draw weight chart
+            
+            // Set today's date as default
+            document.getElementById('weightDate').value = new Date().toISOString().split('T')[0];
             
             // Event listeners
             document.getElementById('addFoodForm').addEventListener('submit', addFood);
@@ -1273,6 +1371,11 @@
             // Show selected page
             document.getElementById(pageName + 'Page').classList.add('active');
             event.target.classList.add('active');
+            
+            // Redraw weight chart when switching to weight page
+            if (pageName === 'weight') {
+                setTimeout(() => drawWeightChart(), 100);
+            }
         }
 
         // Convert any unit to grams/ml equivalent
@@ -2834,6 +2937,483 @@
                     event.target.value = '';
                 } catch (error) {
                     alert('Error importing CSV: ' + error.message);
+                }
+            };
+
+            reader.readAsText(file);
+        }
+
+        // Weight Tracking Functions
+        function addWeightEntry() {
+            const date = document.getElementById('weightDate').value;
+            const morningWeight = document.getElementById('morningWeight').value;
+            const weeklyAvg = document.getElementById('weeklyAvgWeight').value;
+            const notes = document.getElementById('weightNotes').value.trim();
+
+            if (!date) {
+                alert('Please select a date');
+                return;
+            }
+
+            if (!morningWeight && !weeklyAvg) {
+                alert('Please enter at least one weight value');
+                return;
+            }
+
+            // Check if entry for this date already exists
+            const existingIndex = weightData.findIndex(entry => entry.date === date);
+
+            const entry = {
+                date: date,
+                morningWeight: morningWeight ? parseFloat(morningWeight) : null,
+                weeklyAvg: weeklyAvg ? parseFloat(weeklyAvg) : null,
+                notes: notes || null
+            };
+
+            if (existingIndex >= 0) {
+                if (confirm('Entry for this date already exists. Update it?')) {
+                    weightData[existingIndex] = entry;
+                } else {
+                    return;
+                }
+            } else {
+                weightData.push(entry);
+            }
+
+            // Sort by date (newest first)
+            weightData.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+            localStorage.setItem('weightData', JSON.stringify(weightData));
+            syncToFirebase();
+
+            renderWeightTable();
+            drawWeightChart();
+
+            // Clear form
+            document.getElementById('weightDate').value = '';
+            document.getElementById('morningWeight').value = '';
+            document.getElementById('weeklyAvgWeight').value = '';
+            document.getElementById('weightNotes').value = '';
+        }
+
+        function renderWeightTable() {
+            const tbody = document.getElementById('weightTableBody');
+            const emptyMessage = document.getElementById('emptyWeightMessage');
+
+            if (weightData.length === 0) {
+                tbody.innerHTML = '';
+                emptyMessage.style.display = 'block';
+                return;
+            }
+
+            emptyMessage.style.display = 'none';
+
+            tbody.innerHTML = weightData.map((entry, index) => {
+                const rowBg = index % 2 === 0 ? 'white' : '#f8f9fa';
+                
+                // Calculate change from previous entry
+                let changeText = '-';
+                if (index < weightData.length - 1) {
+                    const prevEntry = weightData[index + 1];
+                    const currentWeight = entry.weeklyAvg || entry.morningWeight;
+                    const prevWeight = prevEntry.weeklyAvg || prevEntry.morningWeight;
+                    
+                    if (currentWeight && prevWeight) {
+                        const change = currentWeight - prevWeight;
+                        const changeColor = change < 0 ? '#10b981' : change > 0 ? '#dc2626' : '#666';
+                        changeText = `<span style="color: ${changeColor}; font-weight: 600;">${change > 0 ? '+' : ''}${change.toFixed(1)} lb</span>`;
+                    }
+                }
+
+                return `
+                    <tr style="background: ${rowBg}; border-bottom: 1px solid #e0e0e0;">
+                        <td style="padding: 8px; font-weight: 600;">${entry.date}</td>
+                        <td style="padding: 8px; text-align: center; color: #3b82f6; font-weight: 600;">${entry.morningWeight ? entry.morningWeight + ' lb' : '-'}</td>
+                        <td style="padding: 8px; text-align: center; color: #10b981; font-weight: 600;">${entry.weeklyAvg ? entry.weeklyAvg + ' lb' : '-'}</td>
+                        <td style="padding: 8px; text-align: center;">${changeText}</td>
+                        <td style="padding: 8px; font-size: 0.8rem; color: #666;">${entry.notes || ''}</td>
+                        <td style="padding: 8px; text-align: center;">
+                            <button onclick="deleteWeightEntry('${entry.date}')" style="background: #dc2626; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 0.75rem;">Del</button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function drawWeightChart() {
+            const canvas = document.getElementById('weightChart');
+            const ctx = canvas.getContext('2d');
+            const showMorning = document.getElementById('showMorningWeight').checked;
+            const showWeekly = document.getElementById('showWeeklyAvg').checked;
+
+            // Clear canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            if (weightData.length === 0) {
+                ctx.fillStyle = '#999';
+                ctx.font = '16px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText('No weight data to display', canvas.width / 2, canvas.height / 2);
+                return;
+            }
+
+            // Sort by date (oldest first for chart)
+            const sortedData = [...weightData].sort((a, b) => new Date(a.date) - new Date(b.date));
+
+            // Chart dimensions
+            const padding = 60;
+            const chartWidth = canvas.width - padding * 2;
+            const chartHeight = canvas.height - padding * 2;
+
+            // Find min/max weights
+            let allWeights = [];
+            sortedData.forEach(entry => {
+                if (showMorning && entry.morningWeight) allWeights.push(entry.morningWeight);
+                if (showWeekly && entry.weeklyAvg) allWeights.push(entry.weeklyAvg);
+            });
+
+            if (allWeights.length === 0) {
+                ctx.fillStyle = '#999';
+                ctx.font = '16px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText('No data selected to display', canvas.width / 2, canvas.height / 2);
+                return;
+            }
+
+            const minWeight = Math.min(...allWeights) - 2;
+            const maxWeight = Math.max(...allWeights) + 2;
+            const weightRange = maxWeight - minWeight;
+
+            // Draw grid lines and Y-axis labels
+            ctx.strokeStyle = '#e0e0e0';
+            ctx.lineWidth = 1;
+            ctx.fillStyle = '#666';
+            ctx.font = '12px Arial';
+            ctx.textAlign = 'right';
+            
+            for (let i = 0; i <= 5; i++) {
+                const y = padding + (chartHeight / 5) * i;
+                const weight = maxWeight - (weightRange / 5) * i;
+                
+                ctx.beginPath();
+                ctx.moveTo(padding, y);
+                ctx.lineTo(canvas.width - padding, y);
+                ctx.stroke();
+                
+                ctx.fillText(weight.toFixed(1) + ' lb', padding - 10, y + 4);
+            }
+
+            // Draw axes
+            ctx.strokeStyle = '#333';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(padding, padding);
+            ctx.lineTo(padding, canvas.height - padding);
+            ctx.lineTo(canvas.width - padding, canvas.height - padding);
+            ctx.stroke();
+
+            // Function to get Y coordinate for weight
+            const getY = (weight) => {
+                return canvas.height - padding - ((weight - minWeight) / weightRange) * chartHeight;
+            };
+
+            // Function to get X coordinate for index
+            const getX = (index) => {
+                return padding + (chartWidth / (sortedData.length - 1)) * index;
+            };
+
+            // Draw morning weight line
+            if (showMorning) {
+                ctx.strokeStyle = '#3b82f6';
+                ctx.lineWidth = 3;
+                ctx.beginPath();
+                let firstPoint = true;
+
+                sortedData.forEach((entry, i) => {
+                    if (entry.morningWeight) {
+                        const x = getX(i);
+                        const y = getY(entry.morningWeight);
+                        
+                        if (firstPoint) {
+                            ctx.moveTo(x, y);
+                            firstPoint = false;
+                        } else {
+                            ctx.lineTo(x, y);
+                        }
+                    }
+                });
+                ctx.stroke();
+
+                // Draw points
+                ctx.fillStyle = '#3b82f6';
+                sortedData.forEach((entry, i) => {
+                    if (entry.morningWeight) {
+                        const x = getX(i);
+                        const y = getY(entry.morningWeight);
+                        ctx.beginPath();
+                        ctx.arc(x, y, 5, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
+                });
+            }
+
+            // Draw weekly average line
+            if (showWeekly) {
+                ctx.strokeStyle = '#10b981';
+                ctx.lineWidth = 3;
+                ctx.beginPath();
+                let firstPoint = true;
+
+                sortedData.forEach((entry, i) => {
+                    if (entry.weeklyAvg) {
+                        const x = getX(i);
+                        const y = getY(entry.weeklyAvg);
+                        
+                        if (firstPoint) {
+                            ctx.moveTo(x, y);
+                            firstPoint = false;
+                        } else {
+                            ctx.lineTo(x, y);
+                        }
+                    }
+                });
+                ctx.stroke();
+
+                // Draw points
+                ctx.fillStyle = '#10b981';
+                sortedData.forEach((entry, i) => {
+                    if (entry.weeklyAvg) {
+                        const x = getX(i);
+                        const y = getY(entry.weeklyAvg);
+                        ctx.beginPath();
+                        ctx.arc(x, y, 5, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
+                });
+            }
+
+            // Draw date labels (show every nth date to avoid crowding)
+            ctx.fillStyle = '#666';
+            ctx.font = '11px Arial';
+            ctx.textAlign = 'center';
+            const labelInterval = Math.max(1, Math.floor(sortedData.length / 10));
+            
+            sortedData.forEach((entry, i) => {
+                if (i % labelInterval === 0 || i === sortedData.length - 1) {
+                    const x = getX(i);
+                    const dateLabel = new Date(entry.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                    ctx.fillText(dateLabel, x, canvas.height - padding + 20);
+                }
+            });
+
+            // Add interactive hover (store data for tooltip)
+            canvas._chartData = sortedData;
+            canvas._getX = getX;
+            canvas._getY = getY;
+            canvas._minWeight = minWeight;
+            canvas._maxWeight = maxWeight;
+            canvas._showMorning = showMorning;
+            canvas._showWeekly = showWeekly;
+        }
+
+        // Add hover effect to chart
+        document.addEventListener('DOMContentLoaded', function() {
+            const canvas = document.getElementById('weightChart');
+            const tooltip = document.getElementById('weightChartTooltip');
+
+            canvas.addEventListener('mousemove', function(e) {
+                if (!canvas._chartData || canvas._chartData.length === 0) return;
+
+                const rect = canvas.getBoundingClientRect();
+                const mouseX = e.clientX - rect.left;
+                const mouseY = e.clientY - rect.top;
+
+                // Find closest data point
+                let closestDist = Infinity;
+                let closestEntry = null;
+
+                canvas._chartData.forEach((entry, i) => {
+                    const x = canvas._getX(i);
+                    
+                    if (canvas._showMorning && entry.morningWeight) {
+                        const y = canvas._getY(entry.morningWeight);
+                        const dist = Math.sqrt((mouseX - x) ** 2 + (mouseY - y) ** 2);
+                        if (dist < closestDist && dist < 20) {
+                            closestDist = dist;
+                            closestEntry = { ...entry, type: 'morning' };
+                        }
+                    }
+                    
+                    if (canvas._showWeekly && entry.weeklyAvg) {
+                        const y = canvas._getY(entry.weeklyAvg);
+                        const dist = Math.sqrt((mouseX - x) ** 2 + (mouseY - y) ** 2);
+                        if (dist < closestDist && dist < 20) {
+                            closestDist = dist;
+                            closestEntry = { ...entry, type: 'weekly' };
+                        }
+                    }
+                });
+
+                if (closestEntry) {
+                    const weight = closestEntry.type === 'morning' ? closestEntry.morningWeight : closestEntry.weeklyAvg;
+                    const typeLabel = closestEntry.type === 'morning' ? 'Morning' : 'Weekly Avg';
+                    const color = closestEntry.type === 'morning' ? '#3b82f6' : '#10b981';
+                    
+                    tooltip.innerHTML = `
+                        <div><strong>${closestEntry.date}</strong></div>
+                        <div style="color: ${color};">${typeLabel}: ${weight} lb</div>
+                        ${closestEntry.notes ? `<div style="font-size: 0.75rem; margin-top: 4px;">${closestEntry.notes}</div>` : ''}
+                    `;
+                    tooltip.style.display = 'block';
+                    tooltip.style.left = (e.clientX + 10) + 'px';
+                    tooltip.style.top = (e.clientY - 10) + 'px';
+                } else {
+                    tooltip.style.display = 'none';
+                }
+            });
+
+            canvas.addEventListener('mouseleave', function() {
+                tooltip.style.display = 'none';
+            });
+        });
+
+        function deleteWeightEntry(date) {
+            if (confirm(`Delete weight entry for ${date}?`)) {
+                weightData = weightData.filter(entry => entry.date !== date);
+                localStorage.setItem('weightData', JSON.stringify(weightData));
+                syncToFirebase();
+                renderWeightTable();
+                drawWeightChart();
+            }
+        }
+
+        function exportWeightData() {
+            if (weightData.length === 0) {
+                alert('No weight data to export!');
+                return;
+            }
+
+            const headers = ['day', 'morning fasted weight(lbs)', 'weekly average', 'notes'];
+            const csvRows = [
+                headers.join(','),
+                ...weightData.map(entry => {
+                    // Format date as day of week, full date
+                    const date = new Date(entry.date + 'T00:00:00');
+                    const dayOfWeek = date.toLocaleDateString('en-US', { weekday: 'long' });
+                    const fullDate = date.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+                    const dayLabel = `${dayOfWeek}, ${fullDate}`;
+                    
+                    return [
+                        dayLabel,
+                        entry.morningWeight || '',
+                        entry.weeklyAvg || '',
+                        entry.notes ? `"${entry.notes}"` : ''
+                    ].join(',');
+                })
+            ];
+
+            const csv = csvRows.join('\n');
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `weight-data-${new Date().toISOString().split('T')[0]}.csv`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function importWeightData(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const csv = e.target.result;
+                    const lines = csv.split('\n').filter(line => line.trim());
+
+                    if (lines.length < 2) {
+                        alert('CSV file is empty!');
+                        return;
+                    }
+
+                    const entries = [];
+
+                    for (let i = 1; i < lines.length; i++) {
+                        const line = lines[i];
+                        
+                        // Handle quoted notes with commas
+                        const matches = line.match(/^([^,]+),([^,]*),([^,]*),(.*)$/);
+                        if (!matches) continue;
+
+                        const dayLabel = matches[1].trim();
+                        const morningWeight = matches[2].trim();
+                        const weeklyAvg = matches[3].trim();
+                        let notes = matches[4].trim();
+                        
+                        // Remove quotes from notes
+                        if (notes.startsWith('"') && notes.endsWith('"')) {
+                            notes = notes.slice(1, -1);
+                        }
+
+                        // Parse date from day label
+                        const dateMatch = dayLabel.match(/\w+, (\w+ \d+, \d+)/);
+                        if (!dateMatch) continue;
+
+                        const date = new Date(dateMatch[1]);
+                        if (isNaN(date.getTime())) continue;
+
+                        const isoDate = date.toISOString().split('T')[0];
+
+                        const entry = {
+                            date: isoDate,
+                            morningWeight: morningWeight ? parseFloat(morningWeight) : null,
+                            weeklyAvg: weeklyAvg ? parseFloat(weeklyAvg) : null,
+                            notes: notes || null
+                        };
+
+                        if (entry.date && (entry.morningWeight || entry.weeklyAvg)) {
+                            entries.push(entry);
+                        }
+                    }
+
+                    if (entries.length === 0) {
+                        alert('No valid entries found!');
+                        return;
+                    }
+
+                    const replace = confirm(
+                        `Import ${entries.length} weight entries.\n\n` +
+                        `OK = REPLACE current data\n` +
+                        `Cancel = MERGE (update existing dates)`
+                    );
+
+                    if (replace) {
+                        weightData = entries;
+                    } else {
+                        // Merge
+                        entries.forEach(newEntry => {
+                            const existingIndex = weightData.findIndex(e => e.date === newEntry.date);
+                            if (existingIndex >= 0) {
+                                weightData[existingIndex] = newEntry;
+                            } else {
+                                weightData.push(newEntry);
+                            }
+                        });
+                    }
+
+                    weightData.sort((a, b) => new Date(b.date) - new Date(a.date));
+                    localStorage.setItem('weightData', JSON.stringify(weightData));
+                    syncToFirebase();
+
+                    renderWeightTable();
+                    drawWeightChart();
+
+                    alert(`Successfully imported ${entries.length} entries!`);
+                    event.target.value = '';
+                } catch (error) {
+                    alert('Error importing CSV: ' + error.message);
+                    console.error(error);
                 }
             };
 
