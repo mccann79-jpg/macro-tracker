@@ -804,11 +804,66 @@
 
         <!-- My Day Page -->
         <div id="dayPage" class="page">
+            <!-- Goals Section -->
+            <div class="card" style="margin-bottom: 20px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                    <h2 style="margin: 0;">Daily Goals</h2>
+                    <button type="button" class="btn btn-success" onclick="toggleGoalsEdit()" style="padding: 6px 12px; font-size: 0.85rem; width: auto;">
+                        <span id="goalsEditBtnText">Set Goals</span>
+                    </button>
+                </div>
+                
+                <!-- Goals Input Form (hidden by default) -->
+                <div id="goalsForm" style="display: none; background: #f8f9fa; padding: 16px; border-radius: 8px; margin-bottom: 15px;">
+                    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; margin-bottom: 15px;">
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label for="goalProtein">Protein Goal (g) *</label>
+                            <input type="number" id="goalProtein" min="0" step="1" placeholder="e.g., 150">
+                        </div>
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label for="goalCalories">Calorie Goal *</label>
+                            <input type="number" id="goalCalories" min="0" step="1" placeholder="e.g., 2000">
+                        </div>
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label for="goalCarbs">Carbs Goal (g) <span style="color: #999;">optional</span></label>
+                            <input type="number" id="goalCarbs" min="0" step="1" placeholder="Leave blank to skip">
+                        </div>
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label for="goalFats">Fats Goal (g) <span style="color: #999;">optional</span></label>
+                            <input type="number" id="goalFats" min="0" step="1" placeholder="Leave blank to skip">
+                        </div>
+                    </div>
+                    <div style="display: flex; gap: 10px;">
+                        <button type="button" class="btn" onclick="saveGoals()" style="flex: 1;">Save Goals</button>
+                        <button type="button" class="btn" onclick="clearGoals()" style="flex: 1; background: #dc2626;">Clear Goals</button>
+                    </div>
+                </div>
+                
+                <!-- Goals Display (shown when goals are set) -->
+                <div id="goalsDisplay" style="display: none;">
+                    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; font-size: 0.9rem;">
+                        <div style="padding: 10px; background: #e8f4fd; border-radius: 6px;">
+                            <strong style="color: #3b82f6;">Protein:</strong> <span id="displayGoalProtein">0</span>g
+                        </div>
+                        <div style="padding: 10px; background: #fef3e2; border-radius: 6px;">
+                            <strong style="color: #f59e0b;">Calories:</strong> <span id="displayGoalCalories">0</span>
+                        </div>
+                        <div id="displayGoalCarbsContainer" style="padding: 10px; background: #fef0f0; border-radius: 6px; display: none;">
+                            <strong style="color: #f59e0b;">Carbs:</strong> <span id="displayGoalCarbs">0</span>g
+                        </div>
+                        <div id="displayGoalFatsContainer" style="padding: 10px; background: #e8f8f3; border-radius: 6px; display: none;">
+                            <strong style="color: #10b981;">Fats:</strong> <span id="displayGoalFats">0</span>g
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- Day Totals at Top -->
             <div class="total-macros" style="margin-bottom: 20px;">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px;">
                     <h2 style="margin: 0;">Daily Totals</h2>
                     <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                        <button type="button" class="btn" id="closeOutBtn" onclick="closeOutDay()" style="padding: 8px 12px; font-size: 0.85rem; width: auto; white-space: nowrap; background: linear-gradient(135deg, #0d9488 0%, #0f766e 100%);">📊 Close Out</button>
                         <button type="button" class="btn btn-danger" id="clearDayBtn" onclick="clearDay()" style="padding: 8px 12px; font-size: 0.85rem; width: auto; white-space: nowrap;">Clear Day</button>
                         <button type="button" class="btn btn-success" id="undoClearBtn" onclick="undoClear()" style="padding: 8px 12px; font-size: 0.85rem; width: auto; display: none; white-space: nowrap;">Undo Clear</button>
                     </div>
@@ -818,21 +873,25 @@
                         <div class="total-label">PROTEIN</div>
                         <div class="total-value" id="dayProtein">0</div>
                         <div style="font-size: 0.9rem; opacity: 0.9; margin-top: 4px;" id="dayProteinPct">0%</div>
+                        <div style="font-size: 0.85rem; margin-top: 6px; font-weight: 600;" id="remainingProtein"></div>
                     </div>
                     <div class="total-item">
                         <div class="total-label">CARBS</div>
                         <div class="total-value" id="dayCarbs">0</div>
                         <div style="font-size: 0.9rem; opacity: 0.9; margin-top: 4px;" id="dayCarbsPct">0%</div>
+                        <div style="font-size: 0.85rem; margin-top: 6px; font-weight: 600;" id="remainingCarbs"></div>
                     </div>
                     <div class="total-item">
                         <div class="total-label">FATS</div>
                         <div class="total-value" id="dayFats">0</div>
                         <div style="font-size: 0.9rem; opacity: 0.9; margin-top: 4px;" id="dayFatsPct">0%</div>
+                        <div style="font-size: 0.85rem; margin-top: 6px; font-weight: 600;" id="remainingFats"></div>
                     </div>
                     <div class="total-item">
                         <div class="total-label">CALORIES</div>
                         <div class="total-value" id="dayCalories">0</div>
                         <div style="font-size: 0.9rem; opacity: 0.9; margin-top: 4px;">Total</div>
+                        <div style="font-size: 0.85rem; margin-top: 6px; font-weight: 600;" id="remainingCalories"></div>
                     </div>
                 </div>
                 <div style="margin-top: 20px; font-size: 1.2rem;">
@@ -923,6 +982,45 @@
                     <div id="dayMealsList"></div>
                 </div>
             </div>
+
+            <!-- History Section -->
+            <div class="card" style="margin-top: 20px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px;">
+                    <h2 style="margin: 0;">History</h2>
+                    <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                        <button type="button" class="btn btn-success" onclick="exportHistory()" style="padding: 6px 12px; font-size: 0.85rem; width: auto;">⬇ Export</button>
+                        <button type="button" class="btn btn-success" onclick="document.getElementById('importHistoryInput').click()" style="padding: 6px 12px; font-size: 0.85rem; width: auto;">⬆ Import</button>
+                        <input type="file" id="importHistoryInput" accept=".csv" style="display: none;" onchange="importHistory(event)">
+                    </div>
+                </div>
+
+                <!-- Chart Canvas -->
+                <div style="margin-bottom: 20px;">
+                    <canvas id="historyChart" width="400" height="200" style="max-width: 100%;"></canvas>
+                </div>
+
+                <!-- History Table -->
+                <div style="overflow-x: auto; -webkit-overflow-scrolling: touch;">
+                    <table style="width: 100%; border-collapse: collapse; font-size: 0.85rem; min-width: 600px;">
+                        <thead>
+                            <tr style="background: #2c5282; color: white;">
+                                <th style="padding: 8px; text-align: left;">Date</th>
+                                <th style="padding: 8px; text-align: center;">Calories</th>
+                                <th style="padding: 8px; text-align: center;">Goal</th>
+                                <th style="padding: 8px; text-align: center;">Protein</th>
+                                <th style="padding: 8px; text-align: center;">Goal</th>
+                                <th style="padding: 8px; text-align: center;">Carbs</th>
+                                <th style="padding: 8px; text-align: center;">Fats</th>
+                                <th style="padding: 8px; text-align: center;"></th>
+                            </tr>
+                        </thead>
+                        <tbody id="historyTableBody"></tbody>
+                    </table>
+                </div>
+                <div id="emptyHistoryMessage" style="text-align: center; padding: 40px; color: #999; display: none;">
+                    No history yet. Click "Close Out" to save today's data.
+                </div>
+            </div>
         </div>
     </div>
 
@@ -978,6 +1076,8 @@
         let currentMealBuilder = [];
         let todaysMeals = JSON.parse(localStorage.getItem('todaysMeals')) || [];
         let clearedMealsBackup = null; // For undo functionality
+        let dailyGoals = JSON.parse(localStorage.getItem('dailyGoals')) || null;
+        let dayHistory = JSON.parse(localStorage.getItem('dayHistory')) || [];
 
         // PIN and Firebase Sync Functions
         function showPinOverlay() {
@@ -1041,6 +1141,14 @@
                         todaysMeals = data.todaysMeals;
                         localStorage.setItem('todaysMeals', JSON.stringify(todaysMeals));
                     }
+                    if (data.dailyGoals) {
+                        dailyGoals = data.dailyGoals;
+                        localStorage.setItem('dailyGoals', JSON.stringify(dailyGoals));
+                    }
+                    if (data.dayHistory) {
+                        dayHistory = data.dayHistory;
+                        localStorage.setItem('dayHistory', JSON.stringify(dayHistory));
+                    }
                     
                     // Refresh UI
                     renderFoodList();
@@ -1048,6 +1156,9 @@
                     renderSavedMeals();
                     updateMealSelector();
                     renderDayMeals();
+                    displayGoals();
+                    renderHistory();
+                    drawHistoryChart();
                     
                     console.log('✅ Data loaded from cloud');
                 } else {
@@ -1081,6 +1192,17 @@
                             localStorage.setItem('todaysMeals', JSON.stringify(todaysMeals));
                             renderDayMeals();
                         }
+                        if (data.dailyGoals !== undefined) {
+                            dailyGoals = data.dailyGoals;
+                            localStorage.setItem('dailyGoals', JSON.stringify(dailyGoals));
+                            displayGoals();
+                        }
+                        if (data.dayHistory) {
+                            dayHistory = data.dayHistory;
+                            localStorage.setItem('dayHistory', JSON.stringify(dayHistory));
+                            renderHistory();
+                            drawHistoryChart();
+                        }
                         localStorage.setItem('lastSync', data._lastSync.toString());
                     }
                 }
@@ -1096,6 +1218,8 @@
                 foodDatabase: foodDatabase,
                 savedMeals: savedMeals,
                 todaysMeals: todaysMeals,
+                dailyGoals: dailyGoals,
+                dayHistory: dayHistory,
                 _lastSync: timestamp
             }).then(() => {
                 localStorage.setItem('lastSync', timestamp.toString());
@@ -1118,6 +1242,9 @@
             renderSavedMeals();
             updateMealSelector();
             renderDayMeals();
+            displayGoals(); // Display goals if set
+            renderHistory(); // Display history
+            drawHistoryChart(); // Draw history chart
             
             // Event listeners
             document.getElementById('addFoodForm').addEventListener('submit', addFood);
@@ -2038,6 +2165,50 @@
             document.getElementById('dayProteinPct').textContent = proteinPct + '%';
             document.getElementById('dayCarbsPct').textContent = carbsPct + '%';
             document.getElementById('dayFatsPct').textContent = fatsPct + '%';
+            
+            // Update remaining amounts if goals are set
+            if (dailyGoals) {
+                const remainingProtein = dailyGoals.protein - totalProtein;
+                const remainingCalories = dailyGoals.calories - totalCalories;
+                
+                document.getElementById('remainingProtein').innerHTML = 
+                    remainingProtein >= 0 
+                    ? `<span style="color: #10b981;">${remainingProtein.toFixed(0)}g left</span>` 
+                    : `<span style="color: #dc2626;">${Math.abs(remainingProtein).toFixed(0)}g over</span>`;
+                
+                document.getElementById('remainingCalories').innerHTML = 
+                    remainingCalories >= 0 
+                    ? `<span style="color: #10b981;">${remainingCalories.toFixed(0)} left</span>` 
+                    : `<span style="color: #dc2626;">${Math.abs(remainingCalories).toFixed(0)} over</span>`;
+                
+                // Optional carbs goal
+                if (dailyGoals.carbs !== null && dailyGoals.carbs !== undefined) {
+                    const remainingCarbs = dailyGoals.carbs - totalCarbs;
+                    document.getElementById('remainingCarbs').innerHTML = 
+                        remainingCarbs >= 0 
+                        ? `<span style="color: #10b981;">${remainingCarbs.toFixed(0)}g left</span>` 
+                        : `<span style="color: #dc2626;">${Math.abs(remainingCarbs).toFixed(0)}g over</span>`;
+                } else {
+                    document.getElementById('remainingCarbs').innerHTML = '';
+                }
+                
+                // Optional fats goal
+                if (dailyGoals.fats !== null && dailyGoals.fats !== undefined) {
+                    const remainingFats = dailyGoals.fats - totalFats;
+                    document.getElementById('remainingFats').innerHTML = 
+                        remainingFats >= 0 
+                        ? `<span style="color: #10b981;">${remainingFats.toFixed(0)}g left</span>` 
+                        : `<span style="color: #dc2626;">${Math.abs(remainingFats).toFixed(0)}g over</span>`;
+                } else {
+                    document.getElementById('remainingFats').innerHTML = '';
+                }
+            } else {
+                // Clear remaining displays if no goals
+                document.getElementById('remainingProtein').innerHTML = '';
+                document.getElementById('remainingCarbs').innerHTML = '';
+                document.getElementById('remainingFats').innerHTML = '';
+                document.getElementById('remainingCalories').innerHTML = '';
+            }
         }
 
         // Export food database to CSV
@@ -2247,6 +2418,426 @@
                 renderDayMeals();
                 calculateDayTotals();
             }
+        }
+
+        // Goals management functions
+        function toggleGoalsEdit() {
+            const form = document.getElementById('goalsForm');
+            const display = document.getElementById('goalsDisplay');
+            const btnText = document.getElementById('goalsEditBtnText');
+            
+            if (form.style.display === 'none') {
+                form.style.display = 'block';
+                display.style.display = 'none';
+                btnText.textContent = 'Cancel';
+                
+                // Load existing goals into form
+                if (dailyGoals) {
+                    document.getElementById('goalProtein').value = dailyGoals.protein || '';
+                    document.getElementById('goalCalories').value = dailyGoals.calories || '';
+                    document.getElementById('goalCarbs').value = dailyGoals.carbs || '';
+                    document.getElementById('goalFats').value = dailyGoals.fats || '';
+                }
+            } else {
+                form.style.display = 'none';
+                if (dailyGoals) {
+                    display.style.display = 'block';
+                }
+                btnText.textContent = 'Edit Goals';
+            }
+        }
+
+        function saveGoals() {
+            const protein = parseFloat(document.getElementById('goalProtein').value);
+            const calories = parseFloat(document.getElementById('goalCalories').value);
+            const carbs = document.getElementById('goalCarbs').value ? parseFloat(document.getElementById('goalCarbs').value) : null;
+            const fats = document.getElementById('goalFats').value ? parseFloat(document.getElementById('goalFats').value) : null;
+            
+            if (!protein || !calories) {
+                alert('Please set at least Protein and Calorie goals');
+                return;
+            }
+            
+            dailyGoals = { protein, calories, carbs, fats };
+            localStorage.setItem('dailyGoals', JSON.stringify(dailyGoals));
+            
+            // Update display
+            displayGoals();
+            toggleGoalsEdit();
+            calculateDayTotals();
+        }
+
+        function clearGoals() {
+            if (confirm('Clear all goals?')) {
+                dailyGoals = null;
+                localStorage.removeItem('dailyGoals');
+                document.getElementById('goalsForm').style.display = 'none';
+                document.getElementById('goalsDisplay').style.display = 'none';
+                document.getElementById('goalsEditBtnText').textContent = 'Set Goals';
+                
+                // Clear form inputs
+                document.getElementById('goalProtein').value = '';
+                document.getElementById('goalCalories').value = '';
+                document.getElementById('goalCarbs').value = '';
+                document.getElementById('goalFats').value = '';
+                
+                calculateDayTotals();
+            }
+        }
+
+        function displayGoals() {
+            if (!dailyGoals) {
+                document.getElementById('goalsDisplay').style.display = 'none';
+                return;
+            }
+            
+            document.getElementById('displayGoalProtein').textContent = dailyGoals.protein;
+            document.getElementById('displayGoalCalories').textContent = dailyGoals.calories;
+            
+            // Show/hide optional goals
+            if (dailyGoals.carbs !== null && dailyGoals.carbs !== undefined) {
+                document.getElementById('displayGoalCarbs').textContent = dailyGoals.carbs;
+                document.getElementById('displayGoalCarbsContainer').style.display = 'block';
+            } else {
+                document.getElementById('displayGoalCarbsContainer').style.display = 'none';
+            }
+            
+            if (dailyGoals.fats !== null && dailyGoals.fats !== undefined) {
+                document.getElementById('displayGoalFats').textContent = dailyGoals.fats;
+                document.getElementById('displayGoalFatsContainer').style.display = 'block';
+            } else {
+                document.getElementById('displayGoalFatsContainer').style.display = 'none';
+            }
+            
+            document.getElementById('goalsDisplay').style.display = 'block';
+        }
+
+        // Close Out Day function
+        function closeOutDay() {
+            // Calculate current totals
+            let totalProtein = 0;
+            let totalCarbs = 0;
+            let totalFats = 0;
+            let totalCalories = 0;
+
+            todaysMeals.forEach(item => {
+                const itemType = item.type || 'meal';
+                const amount = item.amount !== undefined ? item.amount : (item.servings || 1);
+                
+                if (itemType === 'food') {
+                    totalProtein += item.macros.protein;
+                    totalCarbs += item.macros.carbs;
+                    totalFats += item.macros.fats;
+                    totalCalories += item.macros.calories || (item.macros.protein * 4 + item.macros.carbs * 4 + item.macros.fats * 9);
+                } else {
+                    totalProtein += item.macros.protein * amount;
+                    totalCarbs += item.macros.carbs * amount;
+                    totalFats += item.macros.fats * amount;
+                    totalCalories += (item.macros.calories || (item.macros.protein * 4 + item.macros.carbs * 4 + item.macros.fats * 9)) * amount;
+                }
+            });
+
+            if (totalCalories === 0) {
+                alert('No meals tracked today. Add some meals before closing out.');
+                return;
+            }
+
+            const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+
+            // Check if already closed out today
+            const existingIndex = dayHistory.findIndex(entry => entry.date === today);
+            
+            const entry = {
+                date: today,
+                calories: parseFloat(totalCalories.toFixed(1)),
+                protein: parseFloat(totalProtein.toFixed(1)),
+                carbs: parseFloat(totalCarbs.toFixed(1)),
+                fats: parseFloat(totalFats.toFixed(1)),
+                calorieGoal: dailyGoals ? dailyGoals.calories : null,
+                proteinGoal: dailyGoals ? dailyGoals.protein : null
+            };
+
+            if (existingIndex >= 0) {
+                if (confirm('Already closed out today. Update with current data?')) {
+                    dayHistory[existingIndex] = entry;
+                } else {
+                    return;
+                }
+            } else {
+                dayHistory.push(entry);
+            }
+
+            // Sort by date (newest first)
+            dayHistory.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+            localStorage.setItem('dayHistory', JSON.stringify(dayHistory));
+            syncToFirebase();
+
+            renderHistory();
+            drawHistoryChart();
+            
+            alert('Day closed out! Data saved to history.');
+        }
+
+        // Render history table
+        function renderHistory() {
+            const tbody = document.getElementById('historyTableBody');
+            const emptyMessage = document.getElementById('emptyHistoryMessage');
+
+            if (dayHistory.length === 0) {
+                tbody.innerHTML = '';
+                emptyMessage.style.display = 'block';
+                return;
+            }
+
+            emptyMessage.style.display = 'none';
+
+            tbody.innerHTML = dayHistory.map((entry, index) => {
+                const rowBg = index % 2 === 0 ? 'white' : '#f8f9fa';
+                const calDiff = entry.calorieGoal ? entry.calories - entry.calorieGoal : null;
+                const proteinDiff = entry.proteinGoal ? entry.protein - entry.proteinGoal : null;
+
+                return `
+                    <tr style="background: ${rowBg}; border-bottom: 1px solid #e0e0e0;">
+                        <td style="padding: 8px; font-weight: 600;">${entry.date}</td>
+                        <td style="padding: 8px; text-align: center;">${entry.calories}</td>
+                        <td style="padding: 8px; text-align: center;">
+                            ${entry.calorieGoal || '-'}
+                            ${calDiff !== null ? `<br><span style="font-size: 0.75rem; color: ${calDiff >= 0 ? '#dc2626' : '#10b981'};">${calDiff > 0 ? '+' : ''}${calDiff.toFixed(0)}</span>` : ''}
+                        </td>
+                        <td style="padding: 8px; text-align: center; color: #3b82f6; font-weight: 600;">${entry.protein}g</td>
+                        <td style="padding: 8px; text-align: center;">
+                            ${entry.proteinGoal ? entry.proteinGoal + 'g' : '-'}
+                            ${proteinDiff !== null ? `<br><span style="font-size: 0.75rem; color: ${proteinDiff >= 0 ? '#10b981' : '#dc2626'};">${proteinDiff > 0 ? '+' : ''}${proteinDiff.toFixed(0)}g</span>` : ''}
+                        </td>
+                        <td style="padding: 8px; text-align: center; color: #f59e0b; font-weight: 600;">${entry.carbs}g</td>
+                        <td style="padding: 8px; text-align: center; color: #10b981; font-weight: 600;">${entry.fats}g</td>
+                        <td style="padding: 8px; text-align: center;">
+                            <button onclick="deleteHistoryEntry('${entry.date}')" style="background: #dc2626; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 0.75rem;">Del</button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        // Draw history chart
+        function drawHistoryChart() {
+            const canvas = document.getElementById('historyChart');
+            const ctx = canvas.getContext('2d');
+            
+            // Clear canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            if (dayHistory.length === 0) {
+                ctx.fillStyle = '#999';
+                ctx.font = '14px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText('No data to display', canvas.width / 2, canvas.height / 2);
+                return;
+            }
+
+            // Get last 14 days
+            const recentData = dayHistory.slice(0, 14).reverse();
+            
+            // Chart dimensions
+            const padding = 40;
+            const chartWidth = canvas.width - padding * 2;
+            const chartHeight = canvas.height - padding * 2;
+
+            // Find max values
+            const maxCalories = Math.max(...recentData.map(d => Math.max(d.calories, d.calorieGoal || 0)));
+            const maxProtein = Math.max(...recentData.map(d => Math.max(d.protein, d.proteinGoal || 0)));
+
+            // Draw axes
+            ctx.strokeStyle = '#ccc';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(padding, padding);
+            ctx.lineTo(padding, canvas.height - padding);
+            ctx.lineTo(canvas.width - padding, canvas.height - padding);
+            ctx.stroke();
+
+            // Draw data
+            const barWidth = chartWidth / recentData.length / 2;
+            const spacing = chartWidth / recentData.length;
+
+            recentData.forEach((entry, i) => {
+                const x = padding + i * spacing;
+                
+                // Calories bar (left, blue)
+                const calHeight = (entry.calories / maxCalories) * chartHeight;
+                ctx.fillStyle = '#3b82f6';
+                ctx.fillRect(x, canvas.height - padding - calHeight, barWidth * 0.8, calHeight);
+
+                // Calorie goal line
+                if (entry.calorieGoal) {
+                    const goalY = canvas.height - padding - (entry.calorieGoal / maxCalories) * chartHeight;
+                    ctx.strokeStyle = '#1e40af';
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    ctx.moveTo(x, goalY);
+                    ctx.lineTo(x + barWidth * 0.8, goalY);
+                    ctx.stroke();
+                }
+
+                // Protein bar (right, green)
+                const proteinHeight = (entry.protein / maxProtein) * chartHeight;
+                ctx.fillStyle = '#10b981';
+                ctx.fillRect(x + barWidth, canvas.height - padding - proteinHeight, barWidth * 0.8, proteinHeight);
+
+                // Protein goal line
+                if (entry.proteinGoal) {
+                    const goalY = canvas.height - padding - (entry.proteinGoal / maxProtein) * chartHeight;
+                    ctx.strokeStyle = '#047857';
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    ctx.moveTo(x + barWidth, goalY);
+                    ctx.lineTo(x + barWidth * 1.8, goalY);
+                    ctx.stroke();
+                }
+
+                // Date label
+                ctx.fillStyle = '#666';
+                ctx.font = '9px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText(entry.date.slice(5), x + barWidth, canvas.height - padding + 15);
+            });
+
+            // Legend
+            ctx.font = '11px Arial';
+            ctx.textAlign = 'left';
+            
+            ctx.fillStyle = '#3b82f6';
+            ctx.fillRect(padding, 10, 15, 10);
+            ctx.fillStyle = '#333';
+            ctx.fillText('Calories', padding + 20, 18);
+
+            ctx.fillStyle = '#10b981';
+            ctx.fillRect(padding + 100, 10, 15, 10);
+            ctx.fillStyle = '#333';
+            ctx.fillText('Protein', padding + 120, 18);
+        }
+
+        // Delete history entry
+        function deleteHistoryEntry(date) {
+            if (confirm(`Delete entry for ${date}?`)) {
+                dayHistory = dayHistory.filter(entry => entry.date !== date);
+                localStorage.setItem('dayHistory', JSON.stringify(dayHistory));
+                syncToFirebase();
+                renderHistory();
+                drawHistoryChart();
+            }
+        }
+
+        // Export history to CSV
+        function exportHistory() {
+            if (dayHistory.length === 0) {
+                alert('No history to export!');
+                return;
+            }
+
+            const headers = ['date', 'calories', 'calorieGoal', 'protein', 'proteinGoal', 'carbs', 'fats'];
+            const csvRows = [
+                headers.join(','),
+                ...dayHistory.map(entry => {
+                    return [
+                        entry.date,
+                        entry.calories,
+                        entry.calorieGoal || '',
+                        entry.protein,
+                        entry.proteinGoal || '',
+                        entry.carbs,
+                        entry.fats
+                    ].join(',');
+                })
+            ];
+
+            const csv = csvRows.join('\n');
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `macro-history-${new Date().toISOString().split('T')[0]}.csv`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        // Import history from CSV
+        function importHistory(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const csv = e.target.result;
+                    const lines = csv.split('\n').filter(line => line.trim());
+
+                    if (lines.length < 2) {
+                        alert('CSV file is empty!');
+                        return;
+                    }
+
+                    const headers = lines[0].split(',').map(h => h.trim());
+                    const entries = [];
+
+                    for (let i = 1; i < lines.length; i++) {
+                        const values = lines[i].split(',').map(v => v.trim());
+                        const entry = {
+                            date: values[0],
+                            calories: parseFloat(values[1]) || 0,
+                            calorieGoal: values[2] ? parseFloat(values[2]) : null,
+                            protein: parseFloat(values[3]) || 0,
+                            proteinGoal: values[4] ? parseFloat(values[4]) : null,
+                            carbs: parseFloat(values[5]) || 0,
+                            fats: parseFloat(values[6]) || 0
+                        };
+
+                        if (entry.date && entry.calories) {
+                            entries.push(entry);
+                        }
+                    }
+
+                    if (entries.length === 0) {
+                        alert('No valid entries found!');
+                        return;
+                    }
+
+                    const replace = confirm(
+                        `Import ${entries.length} history entries.\n\n` +
+                        `OK = REPLACE current history\n` +
+                        `Cancel = MERGE (update existing dates)`
+                    );
+
+                    if (replace) {
+                        dayHistory = entries;
+                    } else {
+                        // Merge
+                        entries.forEach(newEntry => {
+                            const existingIndex = dayHistory.findIndex(e => e.date === newEntry.date);
+                            if (existingIndex >= 0) {
+                                dayHistory[existingIndex] = newEntry;
+                            } else {
+                                dayHistory.push(newEntry);
+                            }
+                        });
+                    }
+
+                    dayHistory.sort((a, b) => new Date(b.date) - new Date(a.date));
+                    localStorage.setItem('dayHistory', JSON.stringify(dayHistory));
+                    syncToFirebase();
+
+                    renderHistory();
+                    drawHistoryChart();
+
+                    alert(`Successfully imported ${entries.length} entries!`);
+                    event.target.value = '';
+                } catch (error) {
+                    alert('Error importing CSV: ' + error.message);
+                }
+            };
+
+            reader.readAsText(file);
         }
     </script>
 </body>
