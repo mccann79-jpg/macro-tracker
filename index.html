@@ -1065,9 +1065,13 @@
                         <input type="checkbox" id="showMorningWeight" checked onchange="drawWeightChart()" style="margin-right: 5px;">
                         <span style="color: #3b82f6; font-weight: 600;">Morning Weight</span>
                     </label>
-                    <label style="display: inline-flex; align-items: center; cursor: pointer;">
+                    <label style="display: inline-flex; align-items: center; margin-right: 20px; cursor: pointer;">
                         <input type="checkbox" id="showWeeklyAvg" checked onchange="drawWeightChart()" style="margin-right: 5px;">
                         <span style="color: #10b981; font-weight: 600;">7-Day Average</span>
+                    </label>
+                    <label style="display: inline-flex; align-items: center; cursor: pointer;">
+                        <input type="checkbox" id="showCalories" onchange="drawWeightChart()" style="margin-right: 5px;">
+                        <span style="color: #f59e0b; font-weight: 600;">Calories</span>
                     </label>
                 </div>
                 <canvas id="weightChart" width="800" height="400" style="max-width: 100%; cursor: crosshair;"></canvas>
@@ -3061,6 +3065,7 @@
             const ctx = canvas.getContext('2d');
             const showMorning = document.getElementById('showMorningWeight').checked;
             const showWeekly = document.getElementById('showWeeklyAvg').checked;
+            const showCalories = document.getElementById('showCalories').checked;
 
             // Clear canvas
             ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -3076,7 +3081,7 @@
             // Sort by date (oldest first for chart)
             const sortedData = [...weightData].sort((a, b) => new Date(a.date) - new Date(b.date));
 
-            // Calculate 7-day rolling averages for chart
+            // Calculate 7-day rolling averages and get calorie data from history
             sortedData.forEach((entry, index) => {
                 // Get last 7 days of data (including current day)
                 const last7Days = sortedData.slice(Math.max(0, index - 6), index + 1);
@@ -3092,11 +3097,16 @@
                 } else {
                     entry.calculated7DayAvg = null;
                 }
+
+                // Get calories from history if available
+                const historyEntry = dayHistory.find(h => h.date === entry.date);
+                entry.calories = historyEntry ? historyEntry.calories : null;
             });
 
             // Chart dimensions
             const padding = 60;
-            const chartWidth = canvas.width - padding * 2;
+            const rightPadding = showCalories ? 80 : 60;
+            const chartWidth = canvas.width - padding - rightPadding;
             const chartHeight = canvas.height - padding * 2;
 
             // Find min/max weights
@@ -3106,7 +3116,7 @@
                 if (showWeekly && entry.calculated7DayAvg) allWeights.push(entry.calculated7DayAvg);
             });
 
-            if (allWeights.length === 0) {
+            if (allWeights.length === 0 && !showCalories) {
                 ctx.fillStyle = '#999';
                 ctx.font = '16px Arial';
                 ctx.textAlign = 'center';
@@ -3114,27 +3124,58 @@
                 return;
             }
 
-            const minWeight = Math.min(...allWeights) - 2;
-            const maxWeight = Math.max(...allWeights) + 2;
+            // Weight axis
+            const minWeight = allWeights.length > 0 ? Math.min(...allWeights) - 2 : 0;
+            const maxWeight = allWeights.length > 0 ? Math.max(...allWeights) + 2 : 200;
             const weightRange = maxWeight - minWeight;
 
-            // Draw grid lines and Y-axis labels
-            ctx.strokeStyle = '#e0e0e0';
-            ctx.lineWidth = 1;
-            ctx.fillStyle = '#666';
-            ctx.font = '12px Arial';
-            ctx.textAlign = 'right';
-            
-            for (let i = 0; i <= 5; i++) {
-                const y = padding + (chartHeight / 5) * i;
-                const weight = maxWeight - (weightRange / 5) * i;
+            // Calorie axis (if enabled)
+            let minCalories = 0;
+            let maxCalories = 3000;
+            let calorieRange = maxCalories;
+
+            if (showCalories) {
+                const calorieValues = sortedData.filter(e => e.calories).map(e => e.calories);
+                if (calorieValues.length > 0) {
+                    minCalories = Math.max(0, Math.min(...calorieValues) - 200);
+                    maxCalories = Math.max(...calorieValues) + 200;
+                    calorieRange = maxCalories - minCalories;
+                }
+            }
+
+            // Draw grid lines and Y-axis labels (weight)
+            if (allWeights.length > 0) {
+                ctx.strokeStyle = '#e0e0e0';
+                ctx.lineWidth = 1;
+                ctx.fillStyle = '#666';
+                ctx.font = '12px Arial';
+                ctx.textAlign = 'right';
                 
-                ctx.beginPath();
-                ctx.moveTo(padding, y);
-                ctx.lineTo(canvas.width - padding, y);
-                ctx.stroke();
+                for (let i = 0; i <= 5; i++) {
+                    const y = padding + (chartHeight / 5) * i;
+                    const weight = maxWeight - (weightRange / 5) * i;
+                    
+                    ctx.beginPath();
+                    ctx.moveTo(padding, y);
+                    ctx.lineTo(canvas.width - rightPadding, y);
+                    ctx.stroke();
+                    
+                    ctx.fillText(weight.toFixed(1) + ' lb', padding - 10, y + 4);
+                }
+            }
+
+            // Draw right Y-axis labels (calories)
+            if (showCalories) {
+                ctx.fillStyle = '#f59e0b';
+                ctx.font = '12px Arial';
+                ctx.textAlign = 'left';
                 
-                ctx.fillText(weight.toFixed(1) + ' lb', padding - 10, y + 4);
+                for (let i = 0; i <= 5; i++) {
+                    const y = padding + (chartHeight / 5) * i;
+                    const calories = maxCalories - (calorieRange / 5) * i;
+                    
+                    ctx.fillText(Math.round(calories) + ' cal', canvas.width - rightPadding + 10, y + 4);
+                }
             }
 
             // Draw axes
@@ -3143,7 +3184,11 @@
             ctx.beginPath();
             ctx.moveTo(padding, padding);
             ctx.lineTo(padding, canvas.height - padding);
-            ctx.lineTo(canvas.width - padding, canvas.height - padding);
+            ctx.lineTo(canvas.width - rightPadding, canvas.height - padding);
+            if (showCalories) {
+                ctx.moveTo(canvas.width - rightPadding, padding);
+                ctx.lineTo(canvas.width - rightPadding, canvas.height - padding);
+            }
             ctx.stroke();
 
             // Function to get Y coordinate for weight
@@ -3151,10 +3196,28 @@
                 return canvas.height - padding - ((weight - minWeight) / weightRange) * chartHeight;
             };
 
+            // Function to get Y coordinate for calories
+            const getCalorieY = (calories) => {
+                return canvas.height - padding - ((calories - minCalories) / calorieRange) * chartHeight;
+            };
+
             // Function to get X coordinate for index
             const getX = (index) => {
                 return padding + (chartWidth / (sortedData.length - 1)) * index;
             };
+
+            // Draw calorie bars (behind lines)
+            if (showCalories) {
+                ctx.fillStyle = 'rgba(245, 158, 11, 0.2)';
+                sortedData.forEach((entry, i) => {
+                    if (entry.calories) {
+                        const x = getX(i);
+                        const y = getCalorieY(entry.calories);
+                        const barWidth = chartWidth / sortedData.length * 0.6;
+                        ctx.fillRect(x - barWidth/2, y, barWidth, canvas.height - padding - y);
+                    }
+                });
+            }
 
             // Draw morning weight line (skip blanks)
             if (showMorning) {
@@ -3244,10 +3307,12 @@
             canvas._chartData = sortedData;
             canvas._getX = getX;
             canvas._getY = getY;
+            canvas._getCalorieY = getCalorieY;
             canvas._minWeight = minWeight;
             canvas._maxWeight = maxWeight;
             canvas._showMorning = showMorning;
             canvas._showWeekly = showWeekly;
+            canvas._showCalories = showCalories;
         }
 
         // Add hover effect to chart
@@ -3296,6 +3361,7 @@
                     tooltip.innerHTML = `
                         <div><strong>${closestEntry.date}</strong></div>
                         <div style="color: ${color};">${typeLabel}: ${weight} lb</div>
+                        ${closestEntry.calories ? `<div style="color: #f59e0b;">Calories: ${closestEntry.calories}</div>` : ''}
                         ${closestEntry.notes ? `<div style="font-size: 0.75rem; margin-top: 4px;">${closestEntry.notes}</div>` : ''}
                     `;
                     tooltip.style.display = 'block';
@@ -3327,20 +3393,13 @@
                 return;
             }
 
-            const headers = ['day', 'morning fasted weight(lbs)', 'weekly average', 'notes'];
+            const headers = ['date', 'morning_weight_lbs', 'notes'];
             const csvRows = [
                 headers.join(','),
                 ...weightData.map(entry => {
-                    // Format date as day of week, full date
-                    const date = new Date(entry.date + 'T00:00:00');
-                    const dayOfWeek = date.toLocaleDateString('en-US', { weekday: 'long' });
-                    const fullDate = date.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
-                    const dayLabel = `${dayOfWeek}, ${fullDate}`;
-                    
                     return [
-                        dayLabel,
+                        entry.date,
                         entry.morningWeight || '',
-                        entry.weeklyAvg || '',
                         entry.notes ? `"${entry.notes}"` : ''
                     ].join(',');
                 })
@@ -3377,24 +3436,32 @@
                         const line = lines[i];
                         
                         // Handle quoted notes with commas
-                        const matches = line.match(/^([^,]+),([^,]*),([^,]*),(.*)$/);
-                        if (!matches) continue;
-
-                        const dayLabel = matches[1].trim();
-                        const morningWeight = matches[2].trim();
-                        const weeklyAvg = matches[3].trim();
-                        let notes = matches[4].trim();
+                        const parts = [];
+                        let current = '';
+                        let inQuotes = false;
                         
-                        // Remove quotes from notes
-                        if (notes.startsWith('"') && notes.endsWith('"')) {
-                            notes = notes.slice(1, -1);
+                        for (let j = 0; j < line.length; j++) {
+                            const char = line[j];
+                            if (char === '"') {
+                                inQuotes = !inQuotes;
+                            } else if (char === ',' && !inQuotes) {
+                                parts.push(current.trim());
+                                current = '';
+                            } else {
+                                current += char;
+                            }
                         }
+                        parts.push(current.trim());
 
-                        // Parse date from day label
-                        const dateMatch = dayLabel.match(/\w+, (\w+ \d+, \d+)/);
-                        if (!dateMatch) continue;
+                        if (parts.length < 2) continue;
 
-                        const date = new Date(dateMatch[1]);
+                        const dateStr = parts[0];
+                        const morningWeight = parts[1];
+                        const notes = parts[2] || '';
+
+                        // Try to parse date (supports YYYY-MM-DD or other formats)
+                        let date = new Date(dateStr + 'T00:00:00');
+                        
                         if (isNaN(date.getTime())) continue;
 
                         const isoDate = date.toISOString().split('T')[0];
@@ -3402,11 +3469,10 @@
                         const entry = {
                             date: isoDate,
                             morningWeight: morningWeight ? parseFloat(morningWeight) : null,
-                            weeklyAvg: weeklyAvg ? parseFloat(weeklyAvg) : null,
                             notes: notes || null
                         };
 
-                        if (entry.date && (entry.morningWeight || entry.weeklyAvg)) {
+                        if (entry.date && entry.morningWeight) {
                             entries.push(entry);
                         }
                     }
