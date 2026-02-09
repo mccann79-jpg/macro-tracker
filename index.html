@@ -575,6 +575,41 @@
             .btn {
                 font-size: 0.9rem !important;
             }
+            
+            /* Weight page mobile optimizations */
+            #goalWeight {
+                font-size: 1rem !important;
+                padding: 12px !important;
+            }
+            
+            #goalProjection {
+                padding: 15px !important;
+            }
+            
+            #goalProjection > div:first-child {
+                grid-template-columns: 1fr !important;
+                gap: 12px !important;
+            }
+            
+            #targetWeight, #projectedDate, #projectedDays {
+                font-size: 1.3rem !important;
+            }
+            
+            #weightChart {
+                max-width: 100% !important;
+                height: 300px !important;
+            }
+            
+            /* Stack weight entry form vertically on very small screens */
+            @media (max-width: 500px) {
+                #goalWeight {
+                    min-width: 100% !important;
+                }
+                
+                #weightTableBody td {
+                    font-size: 0.75rem !important;
+                }
+            }
         }
     </style>
 </head>
@@ -1038,17 +1073,17 @@
                     </div>
                 </div>
 
-                <div style="display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 15px; margin-bottom: 15px;">
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin-bottom: 15px;">
                     <div class="form-group" style="margin-bottom: 0;">
                         <label for="weightDate">Date</label>
-                        <input type="date" id="weightDate" required>
+                        <input type="date" id="weightDate" required style="width: 100%; box-sizing: border-box;">
                     </div>
                     <div class="form-group" style="margin-bottom: 0;">
                         <label for="morningWeight">Morning Weight (lb)</label>
-                        <input type="number" id="morningWeight" step="0.1" placeholder="e.g., 196.5" required>
+                        <input type="number" id="morningWeight" step="0.1" placeholder="e.g., 196.5" required style="width: 100%; box-sizing: border-box;">
                     </div>
                     <div style="display: flex; align-items: flex-end;">
-                        <button type="button" class="btn" onclick="addWeightEntry()" style="width: 100%;">+ Add</button>
+                        <button type="button" class="btn" onclick="addWeightEntry()" style="width: 100%; padding: 10px;">+ Add</button>
                     </div>
                 </div>
 
@@ -1063,21 +1098,36 @@
                 <h2>Weight Trends</h2>
                 
                 <!-- Goal Weight Section -->
-                <div style="background: #f8f9fa; padding: 16px; border-radius: 8px; margin-bottom: 20px;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
-                        <div style="flex: 1; min-width: 200px;">
-                            <label style="font-weight: 600; color: #2c5282; margin-bottom: 8px; display: block;">Goal Weight (lb)</label>
-                            <div style="display: flex; gap: 10px; align-items: center;">
-                                <input type="number" id="goalWeight" step="0.1" placeholder="e.g., 185" style="flex: 1; padding: 10px 12px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 1rem;">
-                                <button type="button" class="btn" onclick="setGoalWeight()" style="padding: 10px 20px; white-space: nowrap;">Set Goal</button>
-                                <button type="button" class="btn btn-danger" onclick="clearGoalWeight()" style="padding: 10px 20px; white-space: nowrap;">Clear</button>
+                <div style="background: linear-gradient(135deg, #e0f2fe 0%, #dbeafe 100%); padding: 20px; border-radius: 12px; margin-bottom: 20px; border: 2px solid #3b82f6;">
+                    <div style="margin-bottom: 16px;">
+                        <label style="font-weight: 700; color: #1e40af; font-size: 1.1rem; margin-bottom: 10px; display: block;">Set Goal Weight</label>
+                        <div style="display: flex; gap: 10px; align-items: stretch; flex-wrap: wrap;">
+                            <input type="number" id="goalWeight" step="0.1" placeholder="e.g., 185" style="flex: 1; min-width: 150px; padding: 14px 16px; border: 2px solid #3b82f6; border-radius: 10px; font-size: 1.1rem; font-weight: 600;">
+                            <button type="button" class="btn" onclick="setGoalWeight()" style="padding: 14px 24px; font-size: 1rem; font-weight: 600; white-space: nowrap; background: #3b82f6;">Set Goal</button>
+                            <button type="button" class="btn btn-danger" onclick="clearGoalWeight()" style="padding: 14px 24px; font-size: 1rem; font-weight: 600; white-space: nowrap;">Clear</button>
+                        </div>
+                    </div>
+                    
+                    <!-- Projection Display -->
+                    <div id="goalProjection" style="display: none; padding: 20px; background: white; border-radius: 10px; border: 3px solid #10b981; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                        <div style="font-size: 0.95rem; color: #666; margin-bottom: 10px; font-weight: 600;">📊 Based on your trend:</div>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 12px;">
+                            <div>
+                                <div style="font-size: 0.85rem; color: #999; margin-bottom: 4px;">Target Weight</div>
+                                <div style="font-size: 1.5rem; font-weight: 700; color: #8b5cf6;" id="targetWeight">185 lb</div>
+                            </div>
+                            <div>
+                                <div style="font-size: 0.85rem; color: #999; margin-bottom: 4px;">Projected Date</div>
+                                <div style="font-size: 1.5rem; font-weight: 700; color: #10b981;" id="projectedDate">March 15, 2026</div>
+                            </div>
+                            <div>
+                                <div style="font-size: 0.85rem; color: #999; margin-bottom: 4px;">Time Remaining</div>
+                                <div style="font-size: 1.5rem; font-weight: 700; color: #f59e0b;" id="projectedDays">35 days</div>
                             </div>
                         </div>
-                        <div id="goalProjection" style="display: none; flex: 1; min-width: 300px; padding: 16px; background: white; border-radius: 8px; border: 2px solid #10b981;">
-                            <div style="font-size: 0.9rem; color: #666; margin-bottom: 8px;">Based on your trend:</div>
-                            <div style="font-size: 1.3rem; font-weight: 700; color: #10b981; margin-bottom: 4px;" id="projectedDate">March 15, 2026</div>
-                            <div style="font-size: 0.95rem; color: #666;" id="projectedDays">35 days from now</div>
-                            <div style="font-size: 0.85rem; color: #999; margin-top: 8px;" id="trendRate">Trend: -0.15 lb/day</div>
+                        <div style="padding-top: 12px; border-top: 2px solid #e5e7eb;">
+                            <div style="font-size: 0.9rem; color: #666; margin-bottom: 4px;" id="weightToGo">8.3 lb to go</div>
+                            <div style="font-size: 0.9rem; color: #666;" id="trendRate">Trend: -0.15 lb/day (-1.05 lb/week)</div>
                         </div>
                     </div>
                 </div>
@@ -3733,10 +3783,13 @@
             if ((goalWeight > currentWeight && slope <= 0) || (goalWeight < currentWeight && slope >= 0)) {
                 // Trend is going opposite direction
                 document.getElementById('goalProjection').style.display = 'block';
-                document.getElementById('projectedDate').textContent = 'Goal not aligned with current trend';
+                document.getElementById('targetWeight').textContent = goalWeight + ' lb';
+                document.getElementById('targetWeight').style.color = '#8b5cf6';
+                document.getElementById('projectedDate').textContent = 'Not aligned with trend';
                 document.getElementById('projectedDate').style.color = '#dc2626';
-                document.getElementById('projectedDays').textContent = slope > 0 ? 'Weight is increasing' : 'Weight is decreasing';
-                document.getElementById('trendRate').textContent = `Trend: ${slope > 0 ? '+' : ''}${slope.toFixed(3)} lb/day`;
+                document.getElementById('projectedDays').textContent = slope > 0 ? 'Gaining' : 'Losing';
+                document.getElementById('weightToGo').textContent = `${Math.abs(currentWeight - goalWeight).toFixed(1)} lb to go`;
+                document.getElementById('trendRate').textContent = `Trend: ${slope > 0 ? '+' : ''}${slope.toFixed(3)} lb/day (${(slope * 7).toFixed(2)} lb/week)`;
                 return;
             }
 
@@ -3752,16 +3805,18 @@
 
             // Display projection
             document.getElementById('goalProjection').style.display = 'block';
+            document.getElementById('targetWeight').textContent = goalWeight + ' lb';
+            document.getElementById('targetWeight').style.color = '#8b5cf6';
             document.getElementById('projectedDate').textContent = projectedDate.toLocaleDateString('en-US', { 
-                weekday: 'long',
                 year: 'numeric', 
-                month: 'long', 
+                month: 'short', 
                 day: 'numeric' 
             });
             document.getElementById('projectedDate').style.color = '#10b981';
             
             const daysFromNow = Math.round((projectedDate - new Date()) / (1000 * 60 * 60 * 24));
-            document.getElementById('projectedDays').textContent = `${daysFromNow} days from now (${Math.abs(currentWeight - goalWeight).toFixed(1)} lb to go)`;
+            document.getElementById('projectedDays').textContent = daysFromNow + ' days';
+            document.getElementById('weightToGo').textContent = `${Math.abs(currentWeight - goalWeight).toFixed(1)} lb to go`;
             document.getElementById('trendRate').textContent = `Trend: ${slope > 0 ? '+' : ''}${slope.toFixed(3)} lb/day (${(slope * 7).toFixed(2)} lb/week)`;
         }
 
