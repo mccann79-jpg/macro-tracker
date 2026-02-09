@@ -863,7 +863,8 @@
             <div class="total-macros" style="margin-bottom: 20px;">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px;">
                     <h2 style="margin: 0;">Daily Totals</h2>
-                    <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                    <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
+                        <input type="date" id="closeOutDate" style="padding: 8px 12px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 0.85rem;">
                         <button type="button" class="btn" id="closeOutBtn" onclick="closeOutDay()" style="padding: 8px 12px; font-size: 0.85rem; width: auto; white-space: nowrap; background: linear-gradient(135deg, #0d9488 0%, #0f766e 100%);">📊 Close Out</button>
                         <button type="button" class="btn btn-danger" id="clearDayBtn" onclick="clearDay()" style="padding: 8px 12px; font-size: 0.85rem; width: auto; white-space: nowrap;">Clear Day</button>
                         <button type="button" class="btn btn-success" id="undoClearBtn" onclick="undoClear()" style="padding: 8px 12px; font-size: 0.85rem; width: auto; display: none; white-space: nowrap;">Undo Clear</button>
@@ -1012,7 +1013,7 @@
                                 <th style="padding: 8px; text-align: center;">Goal</th>
                                 <th style="padding: 8px; text-align: center;">Carbs</th>
                                 <th style="padding: 8px; text-align: center;">Fats</th>
-                                <th style="padding: 8px; text-align: center;"></th>
+                                <th style="padding: 8px; text-align: center;">Actions</th>
                             </tr>
                         </thead>
                         <tbody id="historyTableBody"></tbody>
@@ -1368,8 +1369,10 @@
             drawWeightChart(); // Draw weight chart
             loadGoalWeight(); // Load goal weight if set
             
-            // Set today's date as default
-            document.getElementById('weightDate').value = new Date().toISOString().split('T')[0];
+            // Set today's date as default for close out and weight entry
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('closeOutDate').value = today;
+            document.getElementById('weightDate').value = today;
             
             // Event listeners
             document.getElementById('addFoodForm').addEventListener('submit', addFood);
@@ -2644,6 +2647,13 @@
 
         // Close Out Day function
         function closeOutDay() {
+            // Get selected date or use today
+            const selectedDate = document.getElementById('closeOutDate').value;
+            if (!selectedDate) {
+                alert('Please select a date for this close out');
+                return;
+            }
+
             // Calculate current totals
             let totalProtein = 0;
             let totalCarbs = 0;
@@ -2672,13 +2682,11 @@
                 return;
             }
 
-            const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
-
-            // Check if already closed out today
-            const existingIndex = dayHistory.findIndex(entry => entry.date === today);
+            // Check if already closed out for this date
+            const existingIndex = dayHistory.findIndex(entry => entry.date === selectedDate);
             
             const entry = {
-                date: today,
+                date: selectedDate,
                 calories: parseFloat(totalCalories.toFixed(1)),
                 protein: parseFloat(totalProtein.toFixed(1)),
                 carbs: parseFloat(totalCarbs.toFixed(1)),
@@ -2688,7 +2696,7 @@
             };
 
             if (existingIndex >= 0) {
-                if (confirm('Already closed out today. Update with current data?')) {
+                if (confirm(`Already closed out for ${selectedDate}. Update with current data?`)) {
                     dayHistory[existingIndex] = entry;
                 } else {
                     return;
@@ -2706,7 +2714,7 @@
             renderHistory();
             drawHistoryChart();
             
-            alert('Day closed out! Data saved to history.');
+            alert(`Day closed out for ${selectedDate}! Data saved to history.`);
         }
 
         // Render history table
@@ -2743,6 +2751,7 @@
                         <td style="padding: 8px; text-align: center; color: #f59e0b; font-weight: 600;">${entry.carbs}g</td>
                         <td style="padding: 8px; text-align: center; color: #10b981; font-weight: 600;">${entry.fats}g</td>
                         <td style="padding: 8px; text-align: center;">
+                            <button onclick="editHistoryEntry('${entry.date}')" style="background: #3b82f6; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 0.75rem; margin-right: 4px;">Edit</button>
                             <button onclick="deleteHistoryEntry('${entry.date}')" style="background: #dc2626; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 0.75rem;">Del</button>
                         </td>
                     </tr>
@@ -2846,6 +2855,52 @@
             ctx.fillRect(padding + 100, 10, 15, 10);
             ctx.fillStyle = '#333';
             ctx.fillText('Protein', padding + 120, 18);
+        }
+
+        // Edit history entry
+        function editHistoryEntry(date) {
+            const entry = dayHistory.find(e => e.date === date);
+            if (!entry) return;
+
+            // Prompt for new date
+            const newDate = prompt('Edit date (YYYY-MM-DD):', entry.date);
+            if (newDate && newDate !== date) {
+                // Check if new date already exists
+                if (dayHistory.some(e => e.date === newDate && e !== entry)) {
+                    alert('An entry already exists for that date!');
+                    return;
+                }
+                entry.date = newDate;
+            }
+
+            // Prompt for new values
+            const newCalories = prompt('Edit calories:', entry.calories);
+            if (newCalories !== null && newCalories !== '') {
+                entry.calories = parseFloat(newCalories);
+            }
+
+            const newProtein = prompt('Edit protein (g):', entry.protein);
+            if (newProtein !== null && newProtein !== '') {
+                entry.protein = parseFloat(newProtein);
+            }
+
+            const newCarbs = prompt('Edit carbs (g):', entry.carbs);
+            if (newCarbs !== null && newCarbs !== '') {
+                entry.carbs = parseFloat(newCarbs);
+            }
+
+            const newFats = prompt('Edit fats (g):', entry.fats);
+            if (newFats !== null && newFats !== '') {
+                entry.fats = parseFloat(newFats);
+            }
+
+            // Resort by date
+            dayHistory.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+            localStorage.setItem('dayHistory', JSON.stringify(dayHistory));
+            syncToFirebase();
+            renderHistory();
+            drawHistoryChart();
         }
 
         // Delete history entry
