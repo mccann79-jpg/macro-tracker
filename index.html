@@ -1037,18 +1037,14 @@
                     </div>
                 </div>
 
-                <div style="display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 15px; margin-bottom: 15px;">
+                <div style="display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 15px; margin-bottom: 15px;">
                     <div class="form-group" style="margin-bottom: 0;">
                         <label for="weightDate">Date</label>
                         <input type="date" id="weightDate" required>
                     </div>
                     <div class="form-group" style="margin-bottom: 0;">
-                        <label for="morningWeight">Morning (lb)</label>
-                        <input type="number" id="morningWeight" step="0.1" placeholder="e.g., 196.5">
-                    </div>
-                    <div class="form-group" style="margin-bottom: 0;">
-                        <label for="weeklyAvgWeight">Weekly Avg (lb)</label>
-                        <input type="number" id="weeklyAvgWeight" step="0.1" placeholder="e.g., 196.7">
+                        <label for="morningWeight">Morning Weight (lb)</label>
+                        <input type="number" id="morningWeight" step="0.1" placeholder="e.g., 196.5" required>
                     </div>
                     <div style="display: flex; align-items: flex-end;">
                         <button type="button" class="btn" onclick="addWeightEntry()" style="width: 100%;">+ Add</button>
@@ -1071,7 +1067,7 @@
                     </label>
                     <label style="display: inline-flex; align-items: center; cursor: pointer;">
                         <input type="checkbox" id="showWeeklyAvg" checked onchange="drawWeightChart()" style="margin-right: 5px;">
-                        <span style="color: #10b981; font-weight: 600;">Weekly Average</span>
+                        <span style="color: #10b981; font-weight: 600;">7-Day Average</span>
                     </label>
                 </div>
                 <canvas id="weightChart" width="800" height="400" style="max-width: 100%; cursor: crosshair;"></canvas>
@@ -1087,7 +1083,7 @@
                             <tr style="background: #2c5282; color: white;">
                                 <th style="padding: 8px; text-align: left;">Date</th>
                                 <th style="padding: 8px; text-align: center;">Morning Weight</th>
-                                <th style="padding: 8px; text-align: center;">Weekly Average</th>
+                                <th style="padding: 8px; text-align: center;">7-Day Average</th>
                                 <th style="padding: 8px; text-align: center;">Change</th>
                                 <th style="padding: 8px; text-align: left;">Notes</th>
                                 <th style="padding: 8px; text-align: center;"></th>
@@ -2947,7 +2943,6 @@
         function addWeightEntry() {
             const date = document.getElementById('weightDate').value;
             const morningWeight = document.getElementById('morningWeight').value;
-            const weeklyAvg = document.getElementById('weeklyAvgWeight').value;
             const notes = document.getElementById('weightNotes').value.trim();
 
             if (!date) {
@@ -2955,8 +2950,8 @@
                 return;
             }
 
-            if (!morningWeight && !weeklyAvg) {
-                alert('Please enter at least one weight value');
+            if (!morningWeight) {
+                alert('Please enter morning weight');
                 return;
             }
 
@@ -2966,7 +2961,6 @@
             const entry = {
                 date: date,
                 morningWeight: morningWeight ? parseFloat(morningWeight) : null,
-                weeklyAvg: weeklyAvg ? parseFloat(weeklyAvg) : null,
                 notes: notes || null
             };
 
@@ -2990,9 +2984,8 @@
             drawWeightChart();
 
             // Clear form
-            document.getElementById('weightDate').value = '';
+            document.getElementById('weightDate').value = new Date().toISOString().split('T')[0];
             document.getElementById('morningWeight').value = '';
-            document.getElementById('weeklyAvgWeight').value = '';
             document.getElementById('weightNotes').value = '';
         }
 
@@ -3008,15 +3001,35 @@
 
             emptyMessage.style.display = 'none';
 
+            // Calculate 7-day rolling averages
+            const sortedByDate = [...weightData].sort((a, b) => new Date(a.date) - new Date(b.date));
+            
+            sortedByDate.forEach((entry, index) => {
+                // Get last 7 days of data (including current day)
+                const last7Days = sortedByDate.slice(Math.max(0, index - 6), index + 1);
+                
+                // Get only entries with morning weights
+                const weightsOnly = last7Days
+                    .filter(e => e.morningWeight !== null && e.morningWeight !== undefined)
+                    .map(e => e.morningWeight);
+                
+                if (weightsOnly.length > 0) {
+                    const avg = weightsOnly.reduce((sum, w) => sum + w, 0) / weightsOnly.length;
+                    entry.calculated7DayAvg = parseFloat(avg.toFixed(1));
+                } else {
+                    entry.calculated7DayAvg = null;
+                }
+            });
+
             tbody.innerHTML = weightData.map((entry, index) => {
                 const rowBg = index % 2 === 0 ? 'white' : '#f8f9fa';
                 
-                // Calculate change from previous entry
+                // Calculate change from previous entry (using 7-day average)
                 let changeText = '-';
                 if (index < weightData.length - 1) {
                     const prevEntry = weightData[index + 1];
-                    const currentWeight = entry.weeklyAvg || entry.morningWeight;
-                    const prevWeight = prevEntry.weeklyAvg || prevEntry.morningWeight;
+                    const currentWeight = entry.calculated7DayAvg || entry.morningWeight;
+                    const prevWeight = prevEntry.calculated7DayAvg || prevEntry.morningWeight;
                     
                     if (currentWeight && prevWeight) {
                         const change = currentWeight - prevWeight;
@@ -3025,11 +3038,14 @@
                     }
                 }
 
+                // Show calculated 7-day average
+                const avgDisplay = entry.calculated7DayAvg ? entry.calculated7DayAvg + ' lb' : '-';
+
                 return `
                     <tr style="background: ${rowBg}; border-bottom: 1px solid #e0e0e0;">
                         <td style="padding: 8px; font-weight: 600;">${entry.date}</td>
                         <td style="padding: 8px; text-align: center; color: #3b82f6; font-weight: 600;">${entry.morningWeight ? entry.morningWeight + ' lb' : '-'}</td>
-                        <td style="padding: 8px; text-align: center; color: #10b981; font-weight: 600;">${entry.weeklyAvg ? entry.weeklyAvg + ' lb' : '-'}</td>
+                        <td style="padding: 8px; text-align: center; color: #10b981; font-weight: 600;">${avgDisplay}</td>
                         <td style="padding: 8px; text-align: center;">${changeText}</td>
                         <td style="padding: 8px; font-size: 0.8rem; color: #666;">${entry.notes || ''}</td>
                         <td style="padding: 8px; text-align: center;">
@@ -3060,6 +3076,24 @@
             // Sort by date (oldest first for chart)
             const sortedData = [...weightData].sort((a, b) => new Date(a.date) - new Date(b.date));
 
+            // Calculate 7-day rolling averages for chart
+            sortedData.forEach((entry, index) => {
+                // Get last 7 days of data (including current day)
+                const last7Days = sortedData.slice(Math.max(0, index - 6), index + 1);
+                
+                // Get only entries with morning weights (ignore blanks)
+                const weightsOnly = last7Days
+                    .filter(e => e.morningWeight !== null && e.morningWeight !== undefined)
+                    .map(e => e.morningWeight);
+                
+                if (weightsOnly.length > 0) {
+                    const avg = weightsOnly.reduce((sum, w) => sum + w, 0) / weightsOnly.length;
+                    entry.calculated7DayAvg = parseFloat(avg.toFixed(1));
+                } else {
+                    entry.calculated7DayAvg = null;
+                }
+            });
+
             // Chart dimensions
             const padding = 60;
             const chartWidth = canvas.width - padding * 2;
@@ -3069,7 +3103,7 @@
             let allWeights = [];
             sortedData.forEach(entry => {
                 if (showMorning && entry.morningWeight) allWeights.push(entry.morningWeight);
-                if (showWeekly && entry.weeklyAvg) allWeights.push(entry.weeklyAvg);
+                if (showWeekly && entry.calculated7DayAvg) allWeights.push(entry.calculated7DayAvg);
             });
 
             if (allWeights.length === 0) {
@@ -3122,7 +3156,7 @@
                 return padding + (chartWidth / (sortedData.length - 1)) * index;
             };
 
-            // Draw morning weight line
+            // Draw morning weight line (skip blanks)
             if (showMorning) {
                 ctx.strokeStyle = '#3b82f6';
                 ctx.lineWidth = 3;
@@ -3157,7 +3191,7 @@
                 });
             }
 
-            // Draw weekly average line
+            // Draw 7-day average line (skip blanks)
             if (showWeekly) {
                 ctx.strokeStyle = '#10b981';
                 ctx.lineWidth = 3;
@@ -3165,9 +3199,9 @@
                 let firstPoint = true;
 
                 sortedData.forEach((entry, i) => {
-                    if (entry.weeklyAvg) {
+                    if (entry.calculated7DayAvg) {
                         const x = getX(i);
-                        const y = getY(entry.weeklyAvg);
+                        const y = getY(entry.calculated7DayAvg);
                         
                         if (firstPoint) {
                             ctx.moveTo(x, y);
@@ -3182,9 +3216,9 @@
                 // Draw points
                 ctx.fillStyle = '#10b981';
                 sortedData.forEach((entry, i) => {
-                    if (entry.weeklyAvg) {
+                    if (entry.calculated7DayAvg) {
                         const x = getX(i);
-                        const y = getY(entry.weeklyAvg);
+                        const y = getY(entry.calculated7DayAvg);
                         ctx.beginPath();
                         ctx.arc(x, y, 5, 0, Math.PI * 2);
                         ctx.fill();
@@ -3244,8 +3278,8 @@
                         }
                     }
                     
-                    if (canvas._showWeekly && entry.weeklyAvg) {
-                        const y = canvas._getY(entry.weeklyAvg);
+                    if (canvas._showWeekly && entry.calculated7DayAvg) {
+                        const y = canvas._getY(entry.calculated7DayAvg);
                         const dist = Math.sqrt((mouseX - x) ** 2 + (mouseY - y) ** 2);
                         if (dist < closestDist && dist < 20) {
                             closestDist = dist;
@@ -3255,8 +3289,8 @@
                 });
 
                 if (closestEntry) {
-                    const weight = closestEntry.type === 'morning' ? closestEntry.morningWeight : closestEntry.weeklyAvg;
-                    const typeLabel = closestEntry.type === 'morning' ? 'Morning' : 'Weekly Avg';
+                    const weight = closestEntry.type === 'morning' ? closestEntry.morningWeight : closestEntry.calculated7DayAvg;
+                    const typeLabel = closestEntry.type === 'morning' ? 'Morning' : '7-Day Avg';
                     const color = closestEntry.type === 'morning' ? '#3b82f6' : '#10b981';
                     
                     tooltip.innerHTML = `
