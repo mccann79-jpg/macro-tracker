@@ -1330,7 +1330,18 @@
                 const data = snapshot.val();
                 
                 if (data) {
-                    // Data exists in cloud - load it
+                    // Data exists in cloud - but check if local data is newer/better
+                    const hasLocalData = localStorage.getItem('savedMeals') || localStorage.getItem('todaysMeals') || localStorage.getItem('foodDatabase');
+                    const hasCloudData = data.foodDatabase || data.savedMeals || data.todaysMeals;
+                    
+                    // If we have local data but cloud is empty, upload local instead of clearing
+                    if (hasLocalData && !hasCloudData) {
+                        console.log('⚠️ Cloud is empty but local has data - keeping local data');
+                        syncToFirebase();
+                        return;
+                    }
+                    
+                    // Load cloud data
                     if (data.foodDatabase) {
                         foodDatabase = data.foodDatabase;
                         localStorage.setItem('foodDatabase', JSON.stringify(foodDatabase));
@@ -1445,6 +1456,16 @@
 
         // Initialize
         document.addEventListener('DOMContentLoaded', function() {
+            // DATA RECOVERY CHECK - Prevent accidental data loss
+            console.log('Checking for existing data...');
+            const lsSavedMeals = localStorage.getItem('savedMeals');
+            const lsTodaysMeals = localStorage.getItem('todaysMeals');
+            const lsFoodDatabase = localStorage.getItem('foodDatabase');
+            
+            if (lsSavedMeals) console.log('Found savedMeals in localStorage:', JSON.parse(lsSavedMeals).length, 'items');
+            if (lsTodaysMeals) console.log('Found todaysMeals in localStorage:', JSON.parse(lsTodaysMeals).length, 'items');
+            if (lsFoodDatabase) console.log('Found foodDatabase in localStorage:', JSON.parse(lsFoodDatabase).length, 'items');
+            
             // Check if user has a PIN
             if (!userPin) {
                 showPinOverlay();
@@ -3950,6 +3971,78 @@
             };
 
             reader.readAsText(file);
+        }
+
+        // EMERGENCY DATA RECOVERY FUNCTION
+        // Call this from browser console if data appears lost: recoverDataFromLocalStorage()
+        function recoverDataFromLocalStorage() {
+            console.log('🔄 Attempting data recovery from localStorage...');
+            
+            const recovered = {
+                foodDatabase: localStorage.getItem('foodDatabase'),
+                savedMeals: localStorage.getItem('savedMeals'),
+                todaysMeals: localStorage.getItem('todaysMeals'),
+                dailyGoals: localStorage.getItem('dailyGoals'),
+                dayHistory: localStorage.getItem('dayHistory'),
+                weightData: localStorage.getItem('weightData')
+            };
+            
+            let recoveredCount = 0;
+            
+            if (recovered.foodDatabase) {
+                foodDatabase = JSON.parse(recovered.foodDatabase);
+                console.log('✅ Recovered', foodDatabase.length, 'food items');
+                recoveredCount++;
+            }
+            if (recovered.savedMeals) {
+                savedMeals = JSON.parse(recovered.savedMeals);
+                console.log('✅ Recovered', savedMeals.length, 'saved meals');
+                recoveredCount++;
+            }
+            if (recovered.todaysMeals) {
+                todaysMeals = JSON.parse(recovered.todaysMeals);
+                console.log('✅ Recovered', todaysMeals.length, "today's meals");
+                recoveredCount++;
+            }
+            if (recovered.dailyGoals) {
+                dailyGoals = JSON.parse(recovered.dailyGoals);
+                console.log('✅ Recovered daily goals');
+                recoveredCount++;
+            }
+            if (recovered.dayHistory) {
+                dayHistory = JSON.parse(recovered.dayHistory);
+                console.log('✅ Recovered', dayHistory.length, 'history entries');
+                recoveredCount++;
+            }
+            if (recovered.weightData) {
+                weightData = JSON.parse(recovered.weightData);
+                console.log('✅ Recovered', weightData.length, 'weight entries');
+                recoveredCount++;
+            }
+            
+            if (recoveredCount > 0) {
+                // Refresh all UI
+                renderFoodList();
+                updateFoodSelectors();
+                renderSavedMeals();
+                updateMealSelector();
+                renderDayMeals();
+                calculateDayTotals();
+                displayGoals();
+                renderHistory();
+                drawHistoryChart();
+                renderWeightTable();
+                drawWeightChart();
+                
+                // Sync to Firebase
+                syncToFirebase();
+                
+                alert(`✅ Successfully recovered ${recoveredCount} data categories! Your data has been restored and synced to cloud.`);
+                console.log('✅ Data recovery complete! Synced to Firebase.');
+            } else {
+                alert('❌ No data found in localStorage to recover.');
+                console.log('❌ No data found in localStorage');
+            }
         }
 
         // Goal Weight and Trend Line Functions
