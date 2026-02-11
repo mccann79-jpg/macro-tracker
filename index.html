@@ -1783,23 +1783,33 @@
         }
 
         function filterMealFoodDropdown() {
-            const searchInput = document.getElementById('searchFoodForMeal').value.toLowerCase();
+            const searchInput = document.getElementById('searchFoodForMeal');
             const select = document.getElementById('selectFoodForMeal');
+            if (!searchInput || !select) return;
+            
+            const searchValue = searchInput.value.toLowerCase();
             const options = select.querySelectorAll('option');
+            
+            let visibleCount = 0;
+            let firstVisible = null;
             
             options.forEach(option => {
                 const foodName = option.value.toLowerCase();
-                if (foodName === '' || foodName.includes(searchInput)) {
-                    option.style.display = '';
-                } else {
-                    option.style.display = 'none';
+                const shouldShow = foodName === '' || foodName.includes(searchValue);
+                
+                option.style.display = shouldShow ? '' : 'none';
+                
+                if (shouldShow && option.value !== '') {
+                    visibleCount++;
+                    if (!firstVisible) firstVisible = option;
                 }
             });
             
             // Auto-select first visible option if only one match
-            const visibleOptions = Array.from(options).filter(opt => opt.style.display !== 'none' && opt.value !== '');
-            if (visibleOptions.length === 1) {
-                select.value = visibleOptions[0].value;
+            if (visibleCount === 1 && firstVisible) {
+                select.value = firstVisible.value;
+            } else if (visibleCount === 0) {
+                select.value = '';
             }
         }
 
@@ -2277,25 +2287,33 @@
 
         // Old filter functions (kept for compatibility)
         function filterDayMealDropdown() {
-            const searchInput = document.getElementById('searchMealForDay').value.toLowerCase();
+            const searchInput = document.getElementById('searchMealForDay');
             const select = document.getElementById('selectMealForDay');
-            if (!select) return;
+            if (!searchInput || !select) return;
             
+            const searchValue = searchInput.value.toLowerCase();
             const options = select.querySelectorAll('option');
+            
+            let visibleCount = 0;
+            let firstVisible = null;
             
             options.forEach(option => {
                 const mealName = option.value.toLowerCase();
-                if (mealName === '' || mealName.includes(searchInput)) {
-                    option.style.display = '';
-                } else {
-                    option.style.display = 'none';
+                const shouldShow = mealName === '' || mealName.includes(searchValue);
+                
+                option.style.display = shouldShow ? '' : 'none';
+                
+                if (shouldShow && option.value !== '') {
+                    visibleCount++;
+                    if (!firstVisible) firstVisible = option;
                 }
             });
             
             // Auto-select first visible option if only one match
-            const visibleOptions = Array.from(options).filter(opt => opt.style.display !== 'none' && opt.value !== '');
-            if (visibleOptions.length === 1) {
-                select.value = visibleOptions[0].value;
+            if (visibleCount === 1 && firstVisible) {
+                select.value = firstVisible.value;
+            } else if (visibleCount === 0) {
+                select.value = '';
             }
         }
 
@@ -2313,25 +2331,33 @@
         }
 
         function filterDayFoodDropdown() {
-            const searchInput = document.getElementById('searchFoodForDay').value.toLowerCase();
+            const searchInput = document.getElementById('searchFoodForDay');
             const select = document.getElementById('selectFoodForDay');
-            if (!select) return;
+            if (!searchInput || !select) return;
             
+            const searchValue = searchInput.value.toLowerCase();
             const options = select.querySelectorAll('option');
+            
+            let visibleCount = 0;
+            let firstVisible = null;
             
             options.forEach(option => {
                 const foodName = option.value.toLowerCase();
-                if (foodName === '' || foodName.includes(searchInput)) {
-                    option.style.display = '';
-                } else {
-                    option.style.display = 'none';
+                const shouldShow = foodName === '' || foodName.includes(searchValue);
+                
+                option.style.display = shouldShow ? '' : 'none';
+                
+                if (shouldShow && option.value !== '') {
+                    visibleCount++;
+                    if (!firstVisible) firstVisible = option;
                 }
             });
             
             // Auto-select first visible option if only one match
-            const visibleOptions = Array.from(options).filter(opt => opt.style.display !== 'none' && opt.value !== '');
-            if (visibleOptions.length === 1) {
-                select.value = visibleOptions[0].value;
+            if (visibleCount === 1 && firstVisible) {
+                select.value = firstVisible.value;
+            } else if (visibleCount === 0) {
+                select.value = '';
             }
         }
 
@@ -2815,40 +2841,45 @@
                         return;
                     }
 
-                    // Ask user if they want to replace or merge
-                    const replace = confirm(
-                        `Import ${foods.length} foods.\n\n` +
-                        `Click OK to REPLACE your current database (${foodDatabase.length} foods).\n` +
-                        `Click Cancel to MERGE (add new foods without deleting existing ones).`
-                    );
+                    // Check for duplicates and only add new foods
+                    let addedCount = 0;
+                    let skippedCount = 0;
+                    const duplicates = [];
 
-                    if (replace) {
-                        foodDatabase = foods;
-                    } else {
-                        // Merge: add foods that don't exist, update foods with same name
-                        foods.forEach(newFood => {
-                            const existingIndex = foodDatabase.findIndex(f => 
-                                f.name.toLowerCase() === newFood.name.toLowerCase()
-                            );
-                            if (existingIndex >= 0) {
-                                // Update existing food but keep the original ID
-                                foodDatabase[existingIndex] = {
-                                    ...newFood,
-                                    id: foodDatabase[existingIndex].id
-                                };
-                            } else {
-                                // Add new food
-                                foodDatabase.push(newFood);
-                            }
-                        });
-                    }
+                    foods.forEach(newFood => {
+                        const existingFood = foodDatabase.find(f => 
+                            f.name.toLowerCase() === newFood.name.toLowerCase()
+                        );
+                        
+                        if (existingFood) {
+                            // Duplicate found - skip it
+                            skippedCount++;
+                            duplicates.push(newFood.name);
+                        } else {
+                            // New food - add it
+                            foodDatabase.push(newFood);
+                            addedCount++;
+                        }
+                    });
 
                     localStorage.setItem('foodDatabase', JSON.stringify(foodDatabase));
                     renderFoodList();
                     updateFoodSelectors();
                     syncToFirebase(); // Sync to cloud
                     
-                    alert(`Successfully imported ${foods.length} foods!`);
+                    // Show detailed results
+                    let message = `Import Complete!\n\n`;
+                    message += `✅ Added: ${addedCount} new foods\n`;
+                    message += `⏭️ Skipped: ${skippedCount} duplicates\n`;
+                    message += `📊 Total foods in database: ${foodDatabase.length}`;
+                    
+                    if (duplicates.length > 0 && duplicates.length <= 10) {
+                        message += `\n\nSkipped duplicates:\n${duplicates.join(', ')}`;
+                    } else if (duplicates.length > 10) {
+                        message += `\n\nSkipped duplicates:\n${duplicates.slice(0, 10).join(', ')}\n...and ${duplicates.length - 10} more`;
+                    }
+                    
+                    alert(message);
                     
                     // Reset file input
                     event.target.value = '';
