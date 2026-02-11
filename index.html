@@ -4694,25 +4694,24 @@
                         return;
                     }
 
-                    const replace = confirm(
-                        `Import ${entries.length} history entries.\n\n` +
-                        `OK = REPLACE current history\n` +
-                        `Cancel = MERGE (update existing dates)`
-                    );
+                    // Check for duplicates and only add new entries
+                    let addedCount = 0;
+                    let skippedCount = 0;
+                    const duplicates = [];
 
-                    if (replace) {
-                        dayHistory = entries;
-                    } else {
-                        // Merge
-                        entries.forEach(newEntry => {
-                            const existingIndex = dayHistory.findIndex(e => e.date === newEntry.date);
-                            if (existingIndex >= 0) {
-                                dayHistory[existingIndex] = newEntry;
-                            } else {
-                                dayHistory.push(newEntry);
-                            }
-                        });
-                    }
+                    entries.forEach(newEntry => {
+                        const existingEntry = dayHistory.find(e => e.date === newEntry.date);
+                        
+                        if (existingEntry) {
+                            // Duplicate found - skip it
+                            skippedCount++;
+                            duplicates.push(newEntry.date);
+                        } else {
+                            // New entry - add it
+                            dayHistory.push(newEntry);
+                            addedCount++;
+                        }
+                    });
 
                     dayHistory.sort((a, b) => new Date(b.date) - new Date(a.date));
                     localStorage.setItem('dayHistory', JSON.stringify(dayHistory));
@@ -4721,7 +4720,19 @@
                     renderHistory();
                     drawHistoryChart();
 
-                    alert(`Successfully imported ${entries.length} entries!`);
+                    // Show detailed results
+                    let message = `Import Complete!\n\n`;
+                    message += `✅ Added: ${addedCount} new entries\n`;
+                    message += `⏭️ Skipped: ${skippedCount} duplicates\n`;
+                    message += `📊 Total history entries: ${dayHistory.length}`;
+                    
+                    if (duplicates.length > 0 && duplicates.length <= 10) {
+                        message += `\n\nSkipped duplicates:\n${duplicates.join(', ')}`;
+                    } else if (duplicates.length > 10) {
+                        message += `\n\nSkipped duplicates:\n${duplicates.slice(0, 10).join(', ')}\n...and ${duplicates.length - 10} more`;
+                    }
+                    
+                    alert(message);
                     event.target.value = '';
                 } catch (error) {
                     alert('Error importing CSV: ' + error.message);
@@ -5324,25 +5335,24 @@
                         return;
                     }
 
-                    const replace = confirm(
-                        `Import ${entries.length} weight entries.\n\n` +
-                        `OK = REPLACE current data\n` +
-                        `Cancel = MERGE (update existing dates)`
-                    );
+                    // Check for duplicates and only add new entries
+                    let addedCount = 0;
+                    let skippedCount = 0;
+                    const duplicates = [];
 
-                    if (replace) {
-                        weightData = entries;
-                    } else {
-                        // Merge
-                        entries.forEach(newEntry => {
-                            const existingIndex = weightData.findIndex(e => e.date === newEntry.date);
-                            if (existingIndex >= 0) {
-                                weightData[existingIndex] = newEntry;
-                            } else {
-                                weightData.push(newEntry);
-                            }
-                        });
-                    }
+                    entries.forEach(newEntry => {
+                        const existingEntry = weightData.find(e => e.date === newEntry.date);
+                        
+                        if (existingEntry) {
+                            // Duplicate found - skip it
+                            skippedCount++;
+                            duplicates.push(newEntry.date);
+                        } else {
+                            // New entry - add it
+                            weightData.push(newEntry);
+                            addedCount++;
+                        }
+                    });
 
                     weightData.sort((a, b) => new Date(b.date) - new Date(a.date));
                     localStorage.setItem('weightData', JSON.stringify(weightData));
@@ -5351,7 +5361,19 @@
                     renderWeightTable();
                     drawWeightChart();
 
-                    alert(`Successfully imported ${entries.length} entries!`);
+                    // Show detailed results
+                    let message = `Import Complete!\n\n`;
+                    message += `✅ Added: ${addedCount} new entries\n`;
+                    message += `⏭️ Skipped: ${skippedCount} duplicates\n`;
+                    message += `📊 Total weight entries: ${weightData.length}`;
+                    
+                    if (duplicates.length > 0 && duplicates.length <= 10) {
+                        message += `\n\nSkipped duplicates:\n${duplicates.join(', ')}`;
+                    } else if (duplicates.length > 10) {
+                        message += `\n\nSkipped duplicates:\n${duplicates.slice(0, 10).join(', ')}\n...and ${duplicates.length - 10} more`;
+                    }
+                    
+                    alert(message);
                     event.target.value = '';
                 } catch (error) {
                     alert('Error importing CSV: ' + error.message);
