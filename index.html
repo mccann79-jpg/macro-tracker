@@ -1940,17 +1940,9 @@
         }
 
         function updateFoodSelectors() {
-            // Sort foods alphabetically by name
-            const sortedFoods = [...foodDatabase].sort((a, b) => a.name.localeCompare(b.name));
-            
-            const select = document.getElementById('selectFoodForMeal');
-            select.innerHTML = '<option value="">Choose a food...</option>' +
-                sortedFoods.map(food => 
-                    `<option value="${food.name}">${food.name}</option>`
-                ).join('');
-            
-            // Also update day page selector
-            updateDayFoodSelector();
+            // This function is legacy - we now use custom autocomplete dropdowns
+            // Keep it as a no-op for compatibility
+            return;
         }
 
         // Create Meal - Food Autocomplete
