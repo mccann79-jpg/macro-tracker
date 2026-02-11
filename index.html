@@ -4300,39 +4300,43 @@
 
             // Draw 7-day average line (if enabled)
             if (show7DayAvg) {
-            ctx.strokeStyle = '#dc2626';
-            ctx.lineWidth = 3;
-            ctx.beginPath();
-            recentData.forEach((entry, i) => {
-                const x = getX(i);
-                const y = getY(entry.carbs7DayAvg);
-                if (i === 0) ctx.moveTo(x, y);
-                else ctx.lineTo(x, y);
-            });
-            ctx.stroke();
+                ctx.strokeStyle = '#dc2626';
+                ctx.lineWidth = 3;
+                ctx.beginPath();
+                recentData.forEach((entry, i) => {
+                    const x = getX(i);
+                    const y = getY(entry.carbs7DayAvg);
+                    if (i === 0) ctx.moveTo(x, y);
+                    else ctx.lineTo(x, y);
+                });
+                ctx.stroke();
+            }
 
             // Draw daily carbs bars (if enabled)
             if (showDailyBars) {
-            const barWidth = Math.min(chartWidth / recentData.length * 0.6, 15);
-            recentData.forEach((entry, i) => {
-                const x = getX(i);
-                const y = getY(entry.carbs);
-                const height = canvas.height - padding - y;
-                
-                const withinGoal = hasGoal && Math.abs(entry.carbs - dailyGoals.carbs) <= dailyGoals.carbs * 0.1;
-                ctx.fillStyle = withinGoal ? '#f59e0b' : '#fdba74';
-                ctx.fillRect(x - barWidth / 2, y, barWidth, height);
-            });
+                const barWidth = Math.min(chartWidth / recentData.length * 0.6, 15);
+                recentData.forEach((entry, i) => {
+                    const x = getX(i);
+                    const y = getY(entry.carbs);
+                    const height = canvas.height - padding - y;
+                    
+                    const withinGoal = hasGoal && Math.abs(entry.carbs - dailyGoals.carbs) <= dailyGoals.carbs * 0.1;
+                    ctx.fillStyle = withinGoal ? '#f59e0b' : '#fdba74';
+                    ctx.fillRect(x - barWidth / 2, y, barWidth, height);
+                });
+            }
 
-            // Draw points on 7-day line
-            recentData.forEach((entry, i) => {
-                const x = getX(i);
-                const y = getY(entry.carbs7DayAvg);
-                ctx.fillStyle = '#dc2626';
-                ctx.beginPath();
-                ctx.arc(x, y, 4, 0, Math.PI * 2);
-                ctx.fill();
-            });
+            // Draw points on 7-day line (if enabled)
+            if (show7DayAvg) {
+                recentData.forEach((entry, i) => {
+                    const x = getX(i);
+                    const y = getY(entry.carbs7DayAvg);
+                    ctx.fillStyle = '#dc2626';
+                    ctx.beginPath();
+                    ctx.arc(x, y, 4, 0, Math.PI * 2);
+                    ctx.fill();
+                });
+            }
 
             // Date labels
             ctx.fillStyle = '#666';
@@ -4350,19 +4354,23 @@
             ctx.font = '11px Arial';
             ctx.textAlign = 'left';
             
-            ctx.fillStyle = '#f59e0b';
-            ctx.fillRect(padding, 10, 15, 10);
-            ctx.fillStyle = '#333';
-            ctx.fillText('Daily', padding + 20, 18);
+            if (showDailyBars) {
+                ctx.fillStyle = '#f59e0b';
+                ctx.fillRect(padding, 10, 15, 10);
+                ctx.fillStyle = '#333';
+                ctx.fillText('Daily', padding + 20, 18);
+            }
             
-            ctx.strokeStyle = '#dc2626';
-            ctx.lineWidth = 3;
-            ctx.beginPath();
-            ctx.moveTo(padding + 80, 15);
-            ctx.lineTo(padding + 95, 15);
-            ctx.stroke();
-            ctx.fillStyle = '#333';
-            ctx.fillText('7-Day Avg', padding + 100, 18);
+            if (show7DayAvg) {
+                ctx.strokeStyle = '#dc2626';
+                ctx.lineWidth = 3;
+                ctx.beginPath();
+                ctx.moveTo(padding + 80, 15);
+                ctx.lineTo(padding + 95, 15);
+                ctx.stroke();
+                ctx.fillStyle = '#333';
+                ctx.fillText('7-Day Avg', padding + 100, 18);
+            }
 
             // Calculate and display stats
             const last7Days = recentData.slice(-7);
@@ -4484,38 +4492,43 @@
 
             // Draw 7-day average line (if enabled)
             if (show7DayAvg) {
-            ctx.strokeStyle = '#dc2626';
-            ctx.lineWidth = 3;
-            ctx.beginPath();
-            recentData.forEach((entry, i) => {
-                const x = getX(i);
-                const y = getY(entry.fats7DayAvg);
-                if (i === 0) ctx.moveTo(x, y);
-                else ctx.lineTo(x, y);
-            });
-            ctx.stroke();
-
-            // Draw daily fats bars
-            const barWidth = Math.min(chartWidth / recentData.length * 0.6, 15);
-            recentData.forEach((entry, i) => {
-                const x = getX(i);
-                const y = getY(entry.fats);
-                const height = canvas.height - padding - y;
-                
-                const withinGoal = hasGoal && Math.abs(entry.fats - dailyGoals.fats) <= dailyGoals.fats * 0.1;
-                ctx.fillStyle = withinGoal ? '#10b981' : '#6ee7b7';
-                ctx.fillRect(x - barWidth / 2, y, barWidth, height);
-            });
-
-            // Draw points on 7-day line
-            recentData.forEach((entry, i) => {
-                const x = getX(i);
-                const y = getY(entry.fats7DayAvg);
-                ctx.fillStyle = '#dc2626';
+                ctx.strokeStyle = '#dc2626';
+                ctx.lineWidth = 3;
                 ctx.beginPath();
-                ctx.arc(x, y, 4, 0, Math.PI * 2);
-                ctx.fill();
-            });
+                recentData.forEach((entry, i) => {
+                    const x = getX(i);
+                    const y = getY(entry.fats7DayAvg);
+                    if (i === 0) ctx.moveTo(x, y);
+                    else ctx.lineTo(x, y);
+                });
+                ctx.stroke();
+            }
+
+            // Draw daily fats bars (if enabled)
+            if (showDailyBars) {
+                const barWidth = Math.min(chartWidth / recentData.length * 0.6, 15);
+                recentData.forEach((entry, i) => {
+                    const x = getX(i);
+                    const y = getY(entry.fats);
+                    const height = canvas.height - padding - y;
+                    
+                    const withinGoal = hasGoal && Math.abs(entry.fats - dailyGoals.fats) <= dailyGoals.fats * 0.1;
+                    ctx.fillStyle = withinGoal ? '#10b981' : '#6ee7b7';
+                    ctx.fillRect(x - barWidth / 2, y, barWidth, height);
+                });
+            }
+
+            // Draw points on 7-day line (if enabled)
+            if (show7DayAvg) {
+                recentData.forEach((entry, i) => {
+                    const x = getX(i);
+                    const y = getY(entry.fats7DayAvg);
+                    ctx.fillStyle = '#dc2626';
+                    ctx.beginPath();
+                    ctx.arc(x, y, 4, 0, Math.PI * 2);
+                    ctx.fill();
+                });
+            }
 
             // Date labels
             ctx.fillStyle = '#666';
@@ -4533,19 +4546,23 @@
             ctx.font = '11px Arial';
             ctx.textAlign = 'left';
             
-            ctx.fillStyle = '#10b981';
-            ctx.fillRect(padding, 10, 15, 10);
-            ctx.fillStyle = '#333';
-            ctx.fillText('Daily', padding + 20, 18);
+            if (showDailyBars) {
+                ctx.fillStyle = '#10b981';
+                ctx.fillRect(padding, 10, 15, 10);
+                ctx.fillStyle = '#333';
+                ctx.fillText('Daily', padding + 20, 18);
+            }
             
-            ctx.strokeStyle = '#dc2626';
-            ctx.lineWidth = 3;
-            ctx.beginPath();
-            ctx.moveTo(padding + 80, 15);
-            ctx.lineTo(padding + 95, 15);
-            ctx.stroke();
-            ctx.fillStyle = '#333';
-            ctx.fillText('7-Day Avg', padding + 100, 18);
+            if (show7DayAvg) {
+                ctx.strokeStyle = '#dc2626';
+                ctx.lineWidth = 3;
+                ctx.beginPath();
+                ctx.moveTo(padding + 80, 15);
+                ctx.lineTo(padding + 95, 15);
+                ctx.stroke();
+                ctx.fillStyle = '#333';
+                ctx.fillText('7-Day Avg', padding + 100, 18);
+            }
 
             // Calculate and display stats
             const last7Days = recentData.slice(-7);
