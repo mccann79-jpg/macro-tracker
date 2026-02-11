@@ -662,6 +662,19 @@
     <div class="container">
         <h1>🍽️ Macro Calculator</h1>
 
+        <!-- Emergency Recovery Banner -->
+        <div id="emergencyRecoveryBanner" style="background: #fef3c7; border: 2px solid #f59e0b; border-radius: 12px; padding: 16px; margin-bottom: 20px; display: none;">
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+                <div style="flex: 1;">
+                    <strong style="color: #92400e; font-size: 1.1rem;">⚠️ Data Not Showing?</strong>
+                    <p style="margin: 8px 0 0 0; color: #78350f;">Your data exists but needs to be restored. Click the button to recover.</p>
+                </div>
+                <button onclick="recoverDataFromLocalStorage()" style="background: #f59e0b; color: white; border: none; padding: 12px 24px; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 1rem; white-space: nowrap;">
+                    🔄 Recover Data
+                </button>
+            </div>
+        </div>
+
         <!-- Navigation -->
         <div class="navigation">
             <button class="nav-btn active" onclick="showPage('day')">My Day</button>
@@ -1367,12 +1380,14 @@
                         localStorage.setItem('weightData', JSON.stringify(weightData));
                     }
                     
-                    // Refresh UI
+                    // Refresh UI with loaded data
+                    console.log('🔄 Refreshing UI with Firebase data...');
                     renderFoodList();
                     updateFoodSelectors();
                     renderSavedMeals();
                     updateMealSelector();
                     renderDayMeals();
+                    calculateDayTotals();
                     displayGoals();
                     renderHistory();
                     drawHistoryChart();
@@ -1380,6 +1395,13 @@
                     drawWeightChart();
                     
                     console.log('✅ Data loaded from cloud');
+                    console.log('📊 Data counts:', {
+                        foods: foodDatabase.length,
+                        meals: savedMeals.length,
+                        todayMeals: todaysMeals.length,
+                        history: dayHistory.length,
+                        weight: weightData.length
+                    });
                 } else {
                     // No data in cloud - upload local data
                     syncToFirebase();
@@ -1461,10 +1483,36 @@
             const lsSavedMeals = localStorage.getItem('savedMeals');
             const lsTodaysMeals = localStorage.getItem('todaysMeals');
             const lsFoodDatabase = localStorage.getItem('foodDatabase');
+            const lsWeightData = localStorage.getItem('weightData');
+            const lsHistory = localStorage.getItem('dayHistory');
             
             if (lsSavedMeals) console.log('Found savedMeals in localStorage:', JSON.parse(lsSavedMeals).length, 'items');
             if (lsTodaysMeals) console.log('Found todaysMeals in localStorage:', JSON.parse(lsTodaysMeals).length, 'items');
             if (lsFoodDatabase) console.log('Found foodDatabase in localStorage:', JSON.parse(lsFoodDatabase).length, 'items');
+            if (lsWeightData) console.log('Found weightData in localStorage:', JSON.parse(lsWeightData).length, 'items');
+            if (lsHistory) console.log('Found dayHistory in localStorage:', JSON.parse(lsHistory).length, 'items');
+            
+            // Auto-detect if we have data in localStorage but variables are empty
+            setTimeout(() => {
+                const hasLocalStorageData = (lsSavedMeals && JSON.parse(lsSavedMeals).length > 0) ||
+                                           (lsTodaysMeals && JSON.parse(lsTodaysMeals).length > 0) ||
+                                           (lsFoodDatabase && JSON.parse(lsFoodDatabase).length > 0) ||
+                                           (lsWeightData && JSON.parse(lsWeightData).length > 0);
+                
+                const hasLoadedData = savedMeals.length > 0 || todaysMeals.length > 0 || 
+                                     foodDatabase.length > 0 || weightData.length > 0;
+                
+                if (hasLocalStorageData && !hasLoadedData) {
+                    console.log('⚠️ Data exists in localStorage but not loaded! Showing recovery banner...');
+                    document.getElementById('emergencyRecoveryBanner').style.display = 'block';
+                    
+                    // Auto-recover after 2 seconds if user doesn't click
+                    setTimeout(() => {
+                        console.log('🔄 Auto-recovering data...');
+                        recoverDataFromLocalStorage();
+                    }, 2000);
+                }
+            }, 1000); // Check after 1 second to allow Firebase to load
             
             // Check if user has a PIN
             if (!userPin) {
@@ -3973,6 +4021,32 @@
             reader.readAsText(file);
         }
 
+        // MANUAL UI REFRESH - Call from console if UI is broken: refreshAllUI()
+        function refreshAllUI() {
+            console.log('🔄 Manually refreshing all UI...');
+            console.log('Current data:', {
+                foods: foodDatabase.length,
+                meals: savedMeals.length,
+                todayMeals: todaysMeals.length,
+                history: dayHistory.length,
+                weight: weightData.length
+            });
+            
+            renderFoodList();
+            updateFoodSelectors();
+            renderSavedMeals();
+            updateMealSelector();
+            renderDayMeals();
+            calculateDayTotals();
+            displayGoals();
+            renderHistory();
+            drawHistoryChart();
+            renderWeightTable();
+            drawWeightChart();
+            
+            console.log('✅ UI refresh complete!');
+        }
+
         // EMERGENCY DATA RECOVERY FUNCTION
         // Call this from browser console if data appears lost: recoverDataFromLocalStorage()
         function recoverDataFromLocalStorage() {
@@ -4033,11 +4107,23 @@
                 drawHistoryChart();
                 renderWeightTable();
                 drawWeightChart();
+                loadGoalWeight();
+                
+                // Hide recovery banner
+                const banner = document.getElementById('emergencyRecoveryBanner');
+                if (banner) banner.style.display = 'none';
                 
                 // Sync to Firebase
                 syncToFirebase();
                 
-                alert(`✅ Successfully recovered ${recoveredCount} data categories! Your data has been restored and synced to cloud.`);
+                alert(`✅ Successfully recovered ${recoveredCount} data categories!\n\nRecovered:\n` + 
+                      (recovered.foodDatabase ? `- ${foodDatabase.length} foods\n` : '') +
+                      (recovered.savedMeals ? `- ${savedMeals.length} saved meals\n` : '') +
+                      (recovered.todaysMeals ? `- ${todaysMeals.length} today's meals\n` : '') +
+                      (recovered.dailyGoals ? `- Daily goals\n` : '') +
+                      (recovered.dayHistory ? `- ${dayHistory.length} history entries\n` : '') +
+                      (recovered.weightData ? `- ${weightData.length} weight entries\n` : '') +
+                      '\nYour data has been restored and synced to cloud!');
                 console.log('✅ Data recovery complete! Synced to Firebase.');
             } else {
                 alert('❌ No data found in localStorage to recover.');
