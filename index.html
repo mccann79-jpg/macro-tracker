@@ -3902,12 +3902,13 @@
             const getY = (protein) => canvas.height - padding - (protein / maxProtein) * chartHeight;
 
             // Draw goal line (if enabled)
-            if (showGoalLine && recentData[0].proteinGoal) {
+            const hasProteinGoal = dailyGoals && dailyGoals.protein;
+            if (showGoalLine && hasProteinGoal) {
                 ctx.strokeStyle = '#93c5fd';
                 ctx.lineWidth = 2;
                 ctx.setLineDash([5, 5]);
                 ctx.beginPath();
-                const goalY = getY(recentData[0].proteinGoal);
+                const goalY = getY(dailyGoals.protein);
                 ctx.moveTo(padding, goalY);
                 ctx.lineTo(canvas.width - padding, goalY);
                 ctx.stroke();
@@ -3917,7 +3918,7 @@
                 ctx.fillStyle = '#3b82f6';
                 ctx.font = 'bold 11px Arial';
                 ctx.textAlign = 'left';
-                ctx.fillText(`Goal: ${recentData[0].proteinGoal}g`, padding + 5, goalY - 5);
+                ctx.fillText(`Goal: ${dailyGoals.protein}g`, padding + 5, goalY - 5);
             }
 
             // Draw 7-day average line (if enabled)
@@ -3996,8 +3997,8 @@
             // Calculate and display stats
             const last7Days = recentData.slice(-7);
             const avg7Day = last7Days.reduce((sum, e) => sum + e.protein, 0) / last7Days.length;
-            const goal = recentData[recentData.length - 1].proteinGoal || 0;
-            const daysOverGoal = recentData.filter(e => e.protein >= (e.proteinGoal || Infinity)).length;
+            const goal = dailyGoals ? dailyGoals.protein : 0;
+            const daysOverGoal = dailyGoals ? recentData.filter(e => e.protein >= dailyGoals.protein).length : 0;
             const avgDiff = avg7Day - goal;
 
             document.getElementById('proteinStats').innerHTML = `
@@ -4095,12 +4096,13 @@
             const getY = (calories) => canvas.height - padding - (calories / maxCalories) * chartHeight;
 
             // Draw goal line (if enabled)
-            if (showGoalLine && recentData[0].calorieGoal) {
+            const hasCalorieGoal = dailyGoals && dailyGoals.calories;
+            if (showGoalLine && hasCalorieGoal) {
                 ctx.strokeStyle = '#fcd34d';
                 ctx.lineWidth = 2;
                 ctx.setLineDash([5, 5]);
                 ctx.beginPath();
-                const goalY = getY(recentData[0].calorieGoal);
+                const goalY = getY(dailyGoals.calories);
                 ctx.moveTo(padding, goalY);
                 ctx.lineTo(canvas.width - padding, goalY);
                 ctx.stroke();
@@ -4110,7 +4112,7 @@
                 ctx.fillStyle = '#f59e0b';
                 ctx.font = 'bold 11px Arial';
                 ctx.textAlign = 'left';
-                ctx.fillText(`Goal: ${recentData[0].calorieGoal}`, padding + 5, goalY - 5);
+                ctx.fillText(`Goal: ${dailyGoals.calories}`, padding + 5, goalY - 5);
             }
 
             // Draw 7-day average line (if enabled)
@@ -4186,10 +4188,10 @@
             // Calculate and display stats
             const last7Days = recentData.slice(-7);
             const avg7Day = last7Days.reduce((sum, e) => sum + e.calories, 0) / last7Days.length;
-            const goal = recentData[recentData.length - 1].calorieGoal || 0;
-            const daysWithinGoal = recentData.filter(e => {
-                return e.calorieGoal && Math.abs(e.calories - e.calorieGoal) <= e.calorieGoal * 0.1;
-            }).length;
+            const goal = dailyGoals ? dailyGoals.calories : 0;
+            const daysWithinGoal = dailyGoals ? recentData.filter(e => {
+                return Math.abs(e.calories - dailyGoals.calories) <= dailyGoals.calories * 0.1;
+            }).length : 0;
             const avgDiff = avg7Day - goal;
 
             document.getElementById('calorieStats').innerHTML = `
@@ -4427,6 +4429,11 @@
             
             const ctx = canvas.getContext('2d');
             ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Get toggle states
+            const showDailyBars = document.getElementById('showDailyBars')?.checked ?? true;
+            const show7DayAvg = document.getElementById('show7DayAvg')?.checked ?? true;
+            const showGoalLine = document.getElementById('showGoalLine')?.checked ?? true;
 
             if (dayHistory.length === 0) {
                 ctx.fillStyle = '#999';
