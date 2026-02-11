@@ -968,13 +968,26 @@
 
                 <div id="mealSelectSection">
                     <div class="form-group">
-                        <label for="selectMealForDay">Select Saved Meal</label>
-                        <input type="text" id="searchMealForDay" placeholder="Search meals..." 
-                            style="width: 100%; padding: 10px 12px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 1rem; margin-bottom: 8px;"
-                            onkeyup="filterDayMealDropdown()">
-                        <select id="selectMealForDay" size="5" style="width: 100%; padding: 8px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 0.9rem;">
-                            <option value="">Choose a meal...</option>
-                        </select>
+                        <label for="searchMealForDay">Search & Select Meal</label>
+                        <div style="position: relative;">
+                            <input type="text" id="searchMealForDay" placeholder="Start typing to search meals..." 
+                                style="width: 100%; padding: 12px 14px; border: 2px solid #3b82f6; border-radius: 10px; font-size: 1rem; box-shadow: 0 2px 8px rgba(59, 130, 246, 0.1);"
+                                onfocus="showMealDropdown()" 
+                                onkeyup="filterDayMealDropdownDynamic()" 
+                                autocomplete="off">
+                            <div id="mealDropdownResults" style="display: none; position: absolute; top: 100%; left: 0; right: 0; background: white; border: 2px solid #3b82f6; border-top: none; border-radius: 0 0 10px 10px; max-height: 250px; overflow-y: auto; box-shadow: 0 4px 12px rgba(0,0,0,0.15); z-index: 1000; margin-top: -2px;">
+                                <!-- Dynamically populated -->
+                            </div>
+                        </div>
+                        <div id="selectedMealDisplay" style="display: none; margin-top: 10px; padding: 12px; background: #e8f4fd; border-radius: 8px; border-left: 4px solid #3b82f6;">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <div>
+                                    <strong id="selectedMealName" style="color: #2c5282;">No meal selected</strong>
+                                    <div id="selectedMealMacros" style="font-size: 0.85rem; color: #666; margin-top: 4px;">P: 0g | C: 0g | F: 0g | Cal: 0</div>
+                                </div>
+                                <button onclick="clearMealSelection()" style="background: #dc2626; color: white; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 0.85rem;">Clear</button>
+                            </div>
+                        </div>
                     </div>
 
                     <div class="form-group">
@@ -1000,13 +1013,26 @@
 
                 <div id="foodSelectSection" style="display: none;">
                     <div class="form-group">
-                        <label for="selectFoodForDay">Select Food</label>
-                        <input type="text" id="searchFoodForDay" placeholder="Search foods..." 
-                            style="width: 100%; padding: 10px 12px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 1rem; margin-bottom: 8px;"
-                            onkeyup="filterDayFoodDropdown()">
-                        <select id="selectFoodForDay" size="5" style="width: 100%; padding: 8px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 0.9rem;">
-                            <option value="">Choose a food...</option>
-                        </select>
+                        <label for="searchFoodForDay">Search & Select Food</label>
+                        <div style="position: relative;">
+                            <input type="text" id="searchFoodForDay" placeholder="Start typing to search foods..." 
+                                style="width: 100%; padding: 12px 14px; border: 2px solid #10b981; border-radius: 10px; font-size: 1rem; box-shadow: 0 2px 8px rgba(16, 185, 129, 0.1);"
+                                onfocus="showFoodDropdown()" 
+                                onkeyup="filterDayFoodDropdownDynamic()" 
+                                autocomplete="off">
+                            <div id="foodDropdownResults" style="display: none; position: absolute; top: 100%; left: 0; right: 0; background: white; border: 2px solid #10b981; border-top: none; border-radius: 0 0 10px 10px; max-height: 250px; overflow-y: auto; box-shadow: 0 4px 12px rgba(0,0,0,0.15); z-index: 1000; margin-top: -2px;">
+                                <!-- Dynamically populated -->
+                            </div>
+                        </div>
+                        <div id="selectedFoodDisplay" style="display: none; margin-top: 10px; padding: 12px; background: #e8f8f3; border-radius: 8px; border-left: 4px solid #10b981;">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <div>
+                                    <strong id="selectedFoodName" style="color: #065f46;">No food selected</strong>
+                                    <div id="selectedFoodMacros" style="font-size: 0.85rem; color: #666; margin-top: 4px;">P: 0g | C: 0g | F: 0g | Cal: 0</div>
+                                </div>
+                                <button onclick="clearFoodSelection()" style="background: #dc2626; color: white; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 0.85rem;">Clear</button>
+                            </div>
+                        </div>
                     </div>
 
                     <div class="form-group">
@@ -1458,6 +1484,16 @@
             document.getElementById('pinInput').addEventListener('keypress', function(e) {
                 if (e.key === 'Enter') {
                     submitPin();
+                }
+            });
+
+            // Close dropdowns when clicking outside
+            document.addEventListener('click', function(e) {
+                if (!e.target.closest('#searchMealForDay') && !e.target.closest('#mealDropdownResults')) {
+                    document.getElementById('mealDropdownResults').style.display = 'none';
+                }
+                if (!e.target.closest('#searchFoodForDay') && !e.target.closest('#foodDropdownResults')) {
+                    document.getElementById('foodDropdownResults').style.display = 'none';
                 }
             });
         });
@@ -2002,6 +2038,171 @@
                 ).join('');
         }
 
+        // Dynamic meal search with autocomplete dropdown
+        let selectedMealForDay = null;
+
+        function showMealDropdown() {
+            filterDayMealDropdownDynamic();
+        }
+
+        function filterDayMealDropdownDynamic() {
+            const searchText = document.getElementById('searchMealForDay').value.toLowerCase().trim();
+            const dropdown = document.getElementById('mealDropdownResults');
+            
+            if (searchText === '') {
+                // Show all meals when empty
+                const allMeals = savedMeals.slice(0, 10); // Limit to 10 for performance
+                renderMealDropdown(allMeals);
+                dropdown.style.display = 'block';
+                return;
+            }
+            
+            // Filter meals
+            const filtered = savedMeals.filter(meal => 
+                meal.name.toLowerCase().includes(searchText)
+            ).slice(0, 10);
+            
+            renderMealDropdown(filtered);
+            dropdown.style.display = filtered.length > 0 ? 'block' : 'none';
+        }
+
+        function renderMealDropdown(meals) {
+            const dropdown = document.getElementById('mealDropdownResults');
+            
+            if (meals.length === 0) {
+                dropdown.innerHTML = '<div style="padding: 12px; text-align: center; color: #999;">No meals found</div>';
+                return;
+            }
+            
+            dropdown.innerHTML = meals.map(meal => {
+                const calories = meal.macros.calories || (meal.macros.protein * 4 + meal.macros.carbs * 4 + meal.macros.fats * 9);
+                return `
+                    <div onclick="selectMealForDay('${meal.name}')" 
+                        style="padding: 12px; cursor: pointer; border-bottom: 1px solid #e0e0e0; transition: background 0.2s;"
+                        onmouseover="this.style.background='#e8f4fd'" 
+                        onmouseout="this.style.background='white'">
+                        <div style="font-weight: 600; color: #2c5282; margin-bottom: 4px;">${meal.name}</div>
+                        <div style="font-size: 0.8rem; color: #666;">
+                            P: ${meal.macros.protein.toFixed(1)}g | 
+                            C: ${meal.macros.carbs.toFixed(1)}g | 
+                            F: ${meal.macros.fats.toFixed(1)}g | 
+                            ${calories.toFixed(0)} cal
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function selectMealForDay(mealName) {
+            const meal = savedMeals.find(m => m.name === mealName);
+            if (!meal) return;
+            
+            selectedMealForDay = meal;
+            
+            // Update search box
+            document.getElementById('searchMealForDay').value = meal.name;
+            
+            // Hide dropdown
+            document.getElementById('mealDropdownResults').style.display = 'none';
+            
+            // Show selected display
+            const calories = meal.macros.calories || (meal.macros.protein * 4 + meal.macros.carbs * 4 + meal.macros.fats * 9);
+            document.getElementById('selectedMealName').textContent = meal.name;
+            document.getElementById('selectedMealMacros').textContent = 
+                `P: ${meal.macros.protein.toFixed(1)}g | C: ${meal.macros.carbs.toFixed(1)}g | F: ${meal.macros.fats.toFixed(1)}g | ${calories.toFixed(0)} cal`;
+            document.getElementById('selectedMealDisplay').style.display = 'block';
+        }
+
+        function clearMealSelection() {
+            selectedMealForDay = null;
+            document.getElementById('searchMealForDay').value = '';
+            document.getElementById('selectedMealDisplay').style.display = 'none';
+            document.getElementById('mealDropdownResults').style.display = 'none';
+        }
+
+        // Dynamic food search with autocomplete dropdown
+        let selectedFoodForDay = null;
+
+        function showFoodDropdown() {
+            filterDayFoodDropdownDynamic();
+        }
+
+        function filterDayFoodDropdownDynamic() {
+            const searchText = document.getElementById('searchFoodForDay').value.toLowerCase().trim();
+            const dropdown = document.getElementById('foodDropdownResults');
+            
+            if (searchText === '') {
+                // Show all foods when empty
+                const allFoods = foodDatabase.slice(0, 10); // Limit to 10 for performance
+                renderFoodDropdown(allFoods);
+                dropdown.style.display = 'block';
+                return;
+            }
+            
+            // Filter foods
+            const filtered = foodDatabase.filter(food => 
+                food.name.toLowerCase().includes(searchText)
+            ).slice(0, 10);
+            
+            renderFoodDropdown(filtered);
+            dropdown.style.display = filtered.length > 0 ? 'block' : 'none';
+        }
+
+        function renderFoodDropdown(foods) {
+            const dropdown = document.getElementById('foodDropdownResults');
+            
+            if (foods.length === 0) {
+                dropdown.innerHTML = '<div style="padding: 12px; text-align: center; color: #999;">No foods found</div>';
+                return;
+            }
+            
+            dropdown.innerHTML = foods.map(food => {
+                const calories = food.macros.calories || (food.macros.protein * 4 + food.macros.carbs * 4 + food.macros.fats * 9);
+                return `
+                    <div onclick="selectFoodForDay('${food.name}')" 
+                        style="padding: 12px; cursor: pointer; border-bottom: 1px solid #e0e0e0; transition: background 0.2s;"
+                        onmouseover="this.style.background='#e8f8f3'" 
+                        onmouseout="this.style.background='white'">
+                        <div style="font-weight: 600; color: #065f46; margin-bottom: 4px;">${food.name}</div>
+                        <div style="font-size: 0.8rem; color: #666;">
+                            P: ${food.macros.protein.toFixed(1)}g | 
+                            C: ${food.macros.carbs.toFixed(1)}g | 
+                            F: ${food.macros.fats.toFixed(1)}g | 
+                            ${calories.toFixed(0)} cal
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function selectFoodForDay(foodName) {
+            const food = foodDatabase.find(f => f.name === foodName);
+            if (!food) return;
+            
+            selectedFoodForDay = food;
+            
+            // Update search box
+            document.getElementById('searchFoodForDay').value = food.name;
+            
+            // Hide dropdown
+            document.getElementById('foodDropdownResults').style.display = 'none';
+            
+            // Show selected display
+            const calories = food.macros.calories || (food.macros.protein * 4 + food.macros.carbs * 4 + food.macros.fats * 9);
+            document.getElementById('selectedFoodName').textContent = food.name;
+            document.getElementById('selectedFoodMacros').textContent = 
+                `P: ${food.macros.protein.toFixed(1)}g | C: ${food.macros.carbs.toFixed(1)}g | F: ${food.macros.fats.toFixed(1)}g | ${calories.toFixed(0)} cal`;
+            document.getElementById('selectedFoodDisplay').style.display = 'block';
+        }
+
+        function clearFoodSelection() {
+            selectedFoodForDay = null;
+            document.getElementById('searchFoodForDay').value = '';
+            document.getElementById('selectedFoodDisplay').style.display = 'none';
+            document.getElementById('foodDropdownResults').style.display = 'none';
+        }
+
+        // Old filter functions (kept for compatibility)
         function filterDayMealDropdown() {
             const searchInput = document.getElementById('searchMealForDay').value.toLowerCase();
             const select = document.getElementById('selectMealForDay');
@@ -2114,34 +2315,31 @@
         }
 
         function addFoodToDay() {
-            const foodName = document.getElementById('selectFoodForDay').value.trim();
-            if (!foodName) {
-                return; // Silent fail
+            if (!selectedFoodForDay) {
+                alert('Please select a food first');
+                return;
             }
-
-            const food = foodDatabase.find(f => f.name === foodName);
-            if (!food) return;
 
             const amount = parseFloat(document.getElementById('foodAmountForDay').value) || 1;
             const unit = document.getElementById('foodUnitForDay').value;
 
             // Convert to multiplier for macros
             const baseUnits = convertToBaseUnit(amount, unit);
-            const foodBaseUnits = convertToBaseUnit(food.servingAmount, food.servingUnit);
+            const foodBaseUnits = convertToBaseUnit(selectedFoodForDay.servingAmount, selectedFoodForDay.servingUnit);
             const multiplier = baseUnits / foodBaseUnits;
 
             todaysMeals.push({
                 id: Date.now(),
                 type: 'food',
-                foodName: food.name,
+                foodName: selectedFoodForDay.name,
                 amount: amount,
                 unit: unit,
                 macros: {
-                    protein: food.protein * multiplier,
-                    carbs: food.carbs * multiplier,
-                    fats: food.fats * multiplier,
-                    fiber: (food.fiber || 0) * multiplier,
-                    calories: (food.calories !== undefined ? food.calories : (food.protein * 4 + food.carbs * 4 + food.fats * 9)) * multiplier
+                    protein: selectedFoodForDay.protein * multiplier,
+                    carbs: selectedFoodForDay.carbs * multiplier,
+                    fats: selectedFoodForDay.fats * multiplier,
+                    fiber: (selectedFoodForDay.fiber || 0) * multiplier,
+                    calories: (selectedFoodForDay.calories !== undefined ? selectedFoodForDay.calories : (selectedFoodForDay.protein * 4 + selectedFoodForDay.carbs * 4 + selectedFoodForDay.fats * 9)) * multiplier
                 }
             });
 
@@ -2151,20 +2349,15 @@
             syncToFirebase(); // Sync to cloud
             
             // Reset inputs
-            document.getElementById('selectFoodForDay').value = '';
-            document.getElementById('searchFoodForDay').value = '';
+            clearFoodSelection();
             document.getElementById('foodAmountForDay').value = '1';
-            filterDayFoodDropdown(); // Reset filter
         }
 
         function addMealToDay() {
-            const mealName = document.getElementById('selectMealForDay').value.trim();
-            if (!mealName) {
-                return; // Silent fail
+            if (!selectedMealForDay) {
+                alert('Please select a meal first');
+                return;
             }
-
-            const meal = savedMeals.find(m => m.name === mealName);
-            if (!meal) return;
 
             const amount = parseFloat(document.getElementById('mealServingsForDay').value) || 1;
             const unit = document.getElementById('mealUnitForDay').value;
@@ -2172,11 +2365,11 @@
             todaysMeals.push({
                 id: Date.now(),
                 type: 'meal',
-                mealId: meal.id,
-                mealName: meal.name,
+                mealId: selectedMealForDay.id,
+                mealName: selectedMealForDay.name,
                 amount: amount,
                 unit: unit,
-                macros: meal.perServing
+                macros: selectedMealForDay.perServing
             });
 
             localStorage.setItem('todaysMeals', JSON.stringify(todaysMeals));
@@ -2185,10 +2378,8 @@
             syncToFirebase(); // Sync to cloud
             
             // Reset inputs
-            document.getElementById('selectMealForDay').value = '';
-            document.getElementById('searchMealForDay').value = '';
+            clearMealSelection();
             document.getElementById('mealServingsForDay').value = '1';
-            filterDayMealDropdown(); // Reset filter
         }
 
         function removeMealFromDay(id) {
