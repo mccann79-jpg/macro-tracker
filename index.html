@@ -1578,18 +1578,42 @@
 
             const timestamp = Date.now();
             
+            // Helper function to clean NaN values from objects
+            const cleanNaN = (obj) => {
+                if (obj === null || obj === undefined) return obj;
+                if (typeof obj !== 'object') {
+                    return isNaN(obj) ? null : obj;
+                }
+                if (Array.isArray(obj)) {
+                    return obj.map(item => cleanNaN(item));
+                }
+                const cleaned = {};
+                for (let key in obj) {
+                    const value = obj[key];
+                    if (typeof value === 'number' && isNaN(value)) {
+                        cleaned[key] = null;
+                    } else if (typeof value === 'object') {
+                        cleaned[key] = cleanNaN(value);
+                    } else {
+                        cleaned[key] = value;
+                    }
+                }
+                return cleaned;
+            };
+            
             firebaseRef.set({
-                foodDatabase: foodDatabase,
-                savedMeals: savedMeals,
-                todaysMeals: todaysMeals,
-                dailyGoals: dailyGoals,
-                dayHistory: dayHistory,
-                weightData: weightData,
+                foodDatabase: cleanNaN(foodDatabase),
+                savedMeals: cleanNaN(savedMeals),
+                todaysMeals: cleanNaN(todaysMeals),
+                dailyGoals: cleanNaN(dailyGoals),
+                dayHistory: cleanNaN(dayHistory),
+                weightData: cleanNaN(weightData),
                 _lastSync: timestamp
             }).then(() => {
                 localStorage.setItem('lastSync', timestamp.toString());
             }).catch((error) => {
                 console.error('Sync error:', error);
+                alert('Sync failed: ' + error.message + '\n\nYour data is saved locally, but could not sync to cloud.');
             });
         }
 
@@ -4714,14 +4738,24 @@
 
                     for (let i = 1; i < lines.length; i++) {
                         const values = lines[i].split(',').map(v => v.trim());
+                        
+                        // Helper function to safely parse numbers, returning null for invalid values
+                        const safeParseFloat = (value) => {
+                            if (!value || value === '' || value === 'null' || value === 'undefined') {
+                                return null;
+                            }
+                            const parsed = parseFloat(value);
+                            return isNaN(parsed) ? null : parsed;
+                        };
+                        
                         const entry = {
                             date: values[0],
-                            calories: parseFloat(values[1]) || 0,
-                            calorieGoal: values[2] ? parseFloat(values[2]) : null,
-                            protein: parseFloat(values[3]) || 0,
-                            proteinGoal: values[4] ? parseFloat(values[4]) : null,
-                            carbs: parseFloat(values[5]) || 0,
-                            fats: parseFloat(values[6]) || 0
+                            calories: safeParseFloat(values[1]) || 0,
+                            calorieGoal: safeParseFloat(values[2]),
+                            protein: safeParseFloat(values[3]) || 0,
+                            proteinGoal: safeParseFloat(values[4]),
+                            carbs: safeParseFloat(values[5]) || 0,
+                            fats: safeParseFloat(values[6]) || 0
                         };
 
                         if (entry.date && entry.calories) {
