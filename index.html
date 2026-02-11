@@ -826,14 +826,17 @@
                 <!-- Add Food Row -->
                 <div style="background: #f8f9fa; padding: 16px; border-radius: 8px; margin-bottom: 20px;">
                     <div style="display: grid; grid-template-columns: 3fr 1fr; gap: 10px;">
-                        <div class="form-group" style="margin-bottom: 0;">
-                            <label for="selectFoodForMeal">Add Food to Meal</label>
-                            <input type="text" id="searchFoodForMeal" placeholder="Search foods..." 
-                                style="width: 100%; padding: 10px 12px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 1rem; margin-bottom: 8px;"
-                                onkeyup="filterMealFoodDropdown()">
-                            <select id="selectFoodForMeal" size="5" style="width: 100%; padding: 8px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 0.9rem;">
-                                <option value="">Choose a food...</option>
-                            </select>
+                        <div class="form-group" style="margin-bottom: 0; position: relative;">
+                            <label for="searchFoodForMeal">Add Food to Meal</label>
+                            <input type="text" id="searchFoodForMeal" placeholder="Type to search foods (e.g., 'chick')..." 
+                                style="width: 100%; padding: 12px 14px; border: 2px solid #3b82f6; border-radius: 8px; font-size: 1rem; box-shadow: 0 2px 4px rgba(59, 130, 246, 0.1);"
+                                onfocus="showMealFoodDropdown()"
+                                onkeyup="filterMealFoodDropdownCustom()"
+                                autocomplete="off">
+                            <div id="mealFoodDropdown" style="display: none; position: absolute; top: 100%; left: 0; right: 0; background: white; border: 2px solid #3b82f6; border-top: none; border-radius: 0 0 8px 8px; max-height: 300px; overflow-y: auto; box-shadow: 0 4px 12px rgba(0,0,0,0.15); z-index: 1000; margin-top: -2px;">
+                                <!-- Populated by JavaScript -->
+                            </div>
+                            <input type="hidden" id="selectedFoodForMeal" value="">
                         </div>
                         <div style="display: flex; align-items: flex-end;">
                             <button type="button" class="btn" id="addToMealBuilder" style="width: 100%;">+ Add</button>
@@ -967,14 +970,17 @@
                 </div>
 
                 <div id="mealSelectSection">
-                    <div class="form-group">
-                        <label for="selectMealForDay">Select Saved Meal</label>
-                        <input type="text" id="searchMealForDay" placeholder="Search meals..." 
-                            style="width: 100%; padding: 10px 12px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 1rem; margin-bottom: 8px;"
-                            onkeyup="filterDayMealDropdown()">
-                        <select id="selectMealForDay" size="5" style="width: 100%; padding: 8px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 0.9rem;">
-                            <option value="">Choose a meal...</option>
-                        </select>
+                    <div class="form-group" style="position: relative;">
+                        <label for="searchMealForDay">Select Saved Meal</label>
+                        <input type="text" id="searchMealForDay" placeholder="Type to search meals..." 
+                            style="width: 100%; padding: 12px 14px; border: 2px solid #3b82f6; border-radius: 8px; font-size: 1rem; box-shadow: 0 2px 4px rgba(59, 130, 246, 0.1);"
+                            onfocus="showDayMealDropdown()"
+                            onkeyup="filterDayMealDropdownCustom()"
+                            autocomplete="off">
+                        <div id="dayMealDropdown" style="display: none; position: absolute; top: 100%; left: 0; right: 0; background: white; border: 2px solid #3b82f6; border-top: none; border-radius: 0 0 8px 8px; max-height: 300px; overflow-y: auto; box-shadow: 0 4px 12px rgba(0,0,0,0.15); z-index: 1000; margin-top: -2px;">
+                            <!-- Populated by JavaScript -->
+                        </div>
+                        <input type="hidden" id="selectedMealForDay" value="">
                     </div>
 
                     <div class="form-group">
@@ -999,14 +1005,17 @@
                 </div>
 
                 <div id="foodSelectSection" style="display: none;">
-                    <div class="form-group">
-                        <label for="selectFoodForDay">Select Food</label>
-                        <input type="text" id="searchFoodForDay" placeholder="Search foods..." 
-                            style="width: 100%; padding: 10px 12px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 1rem; margin-bottom: 8px;"
-                            onkeyup="filterDayFoodDropdown()">
-                        <select id="selectFoodForDay" size="5" style="width: 100%; padding: 8px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 0.9rem;">
-                            <option value="">Choose a food...</option>
-                        </select>
+                    <div class="form-group" style="position: relative;">
+                        <label for="searchFoodForDay">Select Food</label>
+                        <input type="text" id="searchFoodForDay" placeholder="Type to search foods..." 
+                            style="width: 100%; padding: 12px 14px; border: 2px solid #10b981; border-radius: 8px; font-size: 1rem; box-shadow: 0 2px 4px rgba(16, 185, 129, 0.1);"
+                            onfocus="showDayFoodDropdown()"
+                            onkeyup="filterDayFoodDropdownCustom()"
+                            autocomplete="off">
+                        <div id="dayFoodDropdown" style="display: none; position: absolute; top: 100%; left: 0; right: 0; background: white; border: 2px solid #10b981; border-top: none; border-radius: 0 0 8px 8px; max-height: 300px; overflow-y: auto; box-shadow: 0 4px 12px rgba(0,0,0,0.15); z-index: 1000; margin-top: -2px;">
+                            <!-- Populated by JavaScript -->
+                        </div>
+                        <input type="hidden" id="selectedFoodForDay" value="">
                     </div>
 
                     <div class="form-group">
@@ -1560,11 +1569,22 @@
 
             // Close dropdowns when clicking outside
             document.addEventListener('click', function(e) {
-                if (!e.target.closest('#searchMealForDay') && !e.target.closest('#mealDropdownResults')) {
-                    document.getElementById('mealDropdownResults').style.display = 'none';
+                // Close meal food dropdown
+                if (!e.target.closest('#searchFoodForMeal') && !e.target.closest('#mealFoodDropdown')) {
+                    const dropdown = document.getElementById('mealFoodDropdown');
+                    if (dropdown) dropdown.style.display = 'none';
                 }
-                if (!e.target.closest('#searchFoodForDay') && !e.target.closest('#foodDropdownResults')) {
-                    document.getElementById('foodDropdownResults').style.display = 'none';
+                
+                // Close day meal dropdown
+                if (!e.target.closest('#searchMealForDay') && !e.target.closest('#dayMealDropdown')) {
+                    const dropdown = document.getElementById('dayMealDropdown');
+                    if (dropdown) dropdown.style.display = 'none';
+                }
+                
+                // Close day food dropdown
+                if (!e.target.closest('#searchFoodForDay') && !e.target.closest('#dayFoodDropdown')) {
+                    const dropdown = document.getElementById('dayFoodDropdown');
+                    if (dropdown) dropdown.style.display = 'none';
                 }
             });
         });
@@ -1782,39 +1802,85 @@
             updateDayFoodSelector();
         }
 
-        function filterMealFoodDropdown() {
+        // Create Meal - Food Autocomplete
+        function showMealFoodDropdown() {
+            filterMealFoodDropdownCustom();
+        }
+
+        function filterMealFoodDropdownCustom() {
             const searchInput = document.getElementById('searchFoodForMeal');
-            const select = document.getElementById('selectFoodForMeal');
-            if (!searchInput || !select) return;
+            const dropdown = document.getElementById('mealFoodDropdown');
             
-            const searchValue = searchInput.value.toLowerCase();
-            const options = select.querySelectorAll('option');
+            if (!searchInput || !dropdown) return;
             
-            let visibleCount = 0;
-            let firstVisible = null;
+            const searchValue = searchInput.value.toLowerCase().trim();
             
-            options.forEach(option => {
-                const foodName = option.value.toLowerCase();
-                const shouldShow = foodName === '' || foodName.includes(searchValue);
+            // Filter foods
+            let matchingFoods = foodDatabase;
+            if (searchValue) {
+                matchingFoods = foodDatabase.filter(food => 
+                    food.name.toLowerCase().includes(searchValue)
+                );
+            }
+            
+            // Sort by relevance (starts with search term first, then alphabetically)
+            matchingFoods.sort((a, b) => {
+                const aName = a.name.toLowerCase();
+                const bName = b.name.toLowerCase();
+                const aStarts = aName.startsWith(searchValue);
+                const bStarts = bName.startsWith(searchValue);
                 
-                option.style.display = shouldShow ? '' : 'none';
-                
-                if (shouldShow && option.value !== '') {
-                    visibleCount++;
-                    if (!firstVisible) firstVisible = option;
-                }
+                if (aStarts && !bStarts) return -1;
+                if (!aStarts && bStarts) return 1;
+                return aName.localeCompare(bName);
             });
             
-            // Auto-select first visible option if only one match
-            if (visibleCount === 1 && firstVisible) {
-                select.value = firstVisible.value;
-            } else if (visibleCount === 0) {
-                select.value = '';
+            // Limit to top 20 results for performance
+            matchingFoods = matchingFoods.slice(0, 20);
+            
+            if (matchingFoods.length === 0) {
+                dropdown.innerHTML = '<div style="padding: 12px; text-align: center; color: #999;">No foods found</div>';
+                dropdown.style.display = 'block';
+                return;
             }
+            
+            // Render dropdown
+            dropdown.innerHTML = matchingFoods.map(food => {
+                const calories = food.calories || (food.protein * 4 + food.carbs * 4 + food.fats * 9);
+                return `
+                    <div onclick="selectMealFood('${food.name.replace(/'/g, "\\'")}')" 
+                        style="padding: 10px 12px; cursor: pointer; border-bottom: 1px solid #f0f0f0;"
+                        onmouseover="this.style.background='#f0f8ff'" 
+                        onmouseout="this.style.background='white'">
+                        <div style="font-weight: 600; color: #333; margin-bottom: 2px;">${food.name}</div>
+                        <div style="font-size: 0.8rem; color: #666;">
+                            ${food.servingAmount} ${UNIT_LABELS[food.servingUnit]} • 
+                            P: ${food.protein}g C: ${food.carbs}g F: ${food.fats}g • 
+                            ${calories.toFixed(0)} cal
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            
+            dropdown.style.display = 'block';
+        }
+
+        function selectMealFood(foodName) {
+            const food = foodDatabase.find(f => f.name === foodName);
+            if (!food) return;
+            
+            document.getElementById('searchFoodForMeal').value = food.name;
+            document.getElementById('selectedFoodForMeal').value = food.name;
+            document.getElementById('mealFoodDropdown').style.display = 'none';
+        }
+
+        function filterMealFoodDropdown() {
+            // Legacy function - redirect to new one
+            filterMealFoodDropdownCustom();
         }
 
         function addFoodToMealBuilder() {
-            const foodName = document.getElementById('selectFoodForMeal').value.trim();
+            const foodName = document.getElementById('selectedFoodForMeal').value || document.getElementById('searchFoodForMeal').value.trim();
             if (!foodName) {
                 return; // Silent fail if no food selected
             }
@@ -1832,10 +1898,10 @@
             renderMealBuilder();
             calculateMealTotals();
             
-            // Reset the dropdown and search
-            document.getElementById('selectFoodForMeal').value = '';
+            // Reset the search
             document.getElementById('searchFoodForMeal').value = '';
-            filterMealFoodDropdown(); // Reset filter
+            document.getElementById('selectedFoodForMeal').value = '';
+            document.getElementById('mealFoodDropdown').style.display = 'none';
         }
 
         function removeFoodFromBuilder(builderId) {
@@ -2121,7 +2187,244 @@
             }
         }
 
-        // Dynamic meal search with autocomplete dropdown
+        // ========== NEW CUSTOM AUTOCOMPLETE SYSTEM ==========
+        
+        // Create Meal - Food Autocomplete
+        function showMealFoodDropdown() {
+            filterMealFoodDropdownCustom();
+        }
+
+        function filterMealFoodDropdownCustom() {
+            const searchInput = document.getElementById('searchFoodForMeal');
+            const dropdown = document.getElementById('mealFoodDropdown');
+            
+            if (!searchInput || !dropdown) return;
+            
+            const searchValue = searchInput.value.toLowerCase().trim();
+            
+            // Filter foods
+            let matchingFoods = foodDatabase;
+            if (searchValue) {
+                matchingFoods = foodDatabase.filter(food => 
+                    food.name.toLowerCase().includes(searchValue)
+                );
+            }
+            
+            // Sort by relevance (starts with search term first, then alphabetically)
+            matchingFoods.sort((a, b) => {
+                const aName = a.name.toLowerCase();
+                const bName = b.name.toLowerCase();
+                const aStarts = aName.startsWith(searchValue);
+                const bStarts = bName.startsWith(searchValue);
+                
+                if (aStarts && !bStarts) return -1;
+                if (!aStarts && bStarts) return 1;
+                return aName.localeCompare(bName);
+            });
+            
+            // Limit to top 20 results for performance
+            matchingFoods = matchingFoods.slice(0, 20);
+            
+            if (matchingFoods.length === 0) {
+                dropdown.innerHTML = '<div style="padding: 12px; text-align: center; color: #999;">No foods found</div>';
+                dropdown.style.display = 'block';
+                return;
+            }
+            
+            // Render dropdown
+            dropdown.innerHTML = matchingFoods.map(food => {
+                const calories = food.calories || (food.protein * 4 + food.carbs * 4 + food.fats * 9);
+                return `
+                    <div onclick="selectMealFood('${food.name.replace(/'/g, "\\'")}')" 
+                        style="padding: 10px 12px; cursor: pointer; border-bottom: 1px solid #f0f0f0;"
+                        onmouseover="this.style.background='#f0f8ff'" 
+                        onmouseout="this.style.background='white'">
+                        <div style="font-weight: 600; color: #333; margin-bottom: 2px;">${food.name}</div>
+                        <div style="font-size: 0.8rem; color: #666;">
+                            ${food.servingAmount} ${UNIT_LABELS[food.servingUnit]} • 
+                            P: ${food.protein}g C: ${food.carbs}g F: ${food.fats}g • 
+                            ${calories.toFixed(0)} cal
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            
+            dropdown.style.display = 'block';
+        }
+
+        function selectMealFood(foodName) {
+            const food = foodDatabase.find(f => f.name === foodName);
+            if (!food) return;
+            
+            document.getElementById('searchFoodForMeal').value = food.name;
+            document.getElementById('selectedFoodForMeal').value = food.name;
+            document.getElementById('mealFoodDropdown').style.display = 'none';
+        }
+
+        function filterMealFoodDropdown() {
+            // Legacy function - redirect to new one
+            filterMealFoodDropdownCustom();
+        }
+
+        // My Day - Meal Autocomplete
+        function showDayMealDropdown() {
+            filterDayMealDropdownCustom();
+        }
+
+        function filterDayMealDropdownCustom() {
+            const searchInput = document.getElementById('searchMealForDay');
+            const dropdown = document.getElementById('dayMealDropdown');
+            
+            if (!searchInput || !dropdown) return;
+            
+            const searchValue = searchInput.value.toLowerCase().trim();
+            
+            // Filter meals
+            let matchingMeals = savedMeals;
+            if (searchValue) {
+                matchingMeals = savedMeals.filter(meal => 
+                    meal.name.toLowerCase().includes(searchValue)
+                );
+            }
+            
+            // Sort by relevance
+            matchingMeals.sort((a, b) => {
+                const aName = a.name.toLowerCase();
+                const bName = b.name.toLowerCase();
+                const aStarts = aName.startsWith(searchValue);
+                const bStarts = bName.startsWith(searchValue);
+                
+                if (aStarts && !bStarts) return -1;
+                if (!aStarts && bStarts) return 1;
+                return aName.localeCompare(bName);
+            });
+            
+            // Limit to top 20 results
+            matchingMeals = matchingMeals.slice(0, 20);
+            
+            if (matchingMeals.length === 0) {
+                dropdown.innerHTML = '<div style="padding: 12px; text-align: center; color: #999;">No meals found</div>';
+                dropdown.style.display = 'block';
+                return;
+            }
+            
+            // Render dropdown
+            dropdown.innerHTML = matchingMeals.map(meal => {
+                const calories = meal.perServing.calories || (meal.perServing.protein * 4 + meal.perServing.carbs * 4 + meal.perServing.fats * 9);
+                return `
+                    <div onclick="selectDayMeal('${meal.name.replace(/'/g, "\\'")}')" 
+                        style="padding: 10px 12px; cursor: pointer; border-bottom: 1px solid #f0f0f0;"
+                        onmouseover="this.style.background='#f0f8ff'" 
+                        onmouseout="this.style.background='white'">
+                        <div style="font-weight: 600; color: #2c5282; margin-bottom: 2px;">${meal.name}</div>
+                        <div style="font-size: 0.8rem; color: #666;">
+                            ${meal.totalServings} servings • 
+                            P: ${meal.perServing.protein.toFixed(1)}g 
+                            C: ${meal.perServing.carbs.toFixed(1)}g 
+                            F: ${meal.perServing.fats.toFixed(1)}g • 
+                            ${calories.toFixed(0)} cal/srv
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            
+            dropdown.style.display = 'block';
+        }
+
+        function selectDayMeal(mealName) {
+            const meal = savedMeals.find(m => m.name === mealName);
+            if (!meal) return;
+            
+            document.getElementById('searchMealForDay').value = meal.name;
+            document.getElementById('selectedMealForDay').value = meal.name;
+            document.getElementById('dayMealDropdown').style.display = 'none';
+        }
+
+        function filterDayMealDropdown() {
+            // Legacy function - redirect to new one
+            filterDayMealDropdownCustom();
+        }
+
+        // My Day - Food Autocomplete
+        function showDayFoodDropdown() {
+            filterDayFoodDropdownCustom();
+        }
+
+        function filterDayFoodDropdownCustom() {
+            const searchInput = document.getElementById('searchFoodForDay');
+            const dropdown = document.getElementById('dayFoodDropdown');
+            
+            if (!searchInput || !dropdown) return;
+            
+            const searchValue = searchInput.value.toLowerCase().trim();
+            
+            // Filter foods
+            let matchingFoods = foodDatabase;
+            if (searchValue) {
+                matchingFoods = foodDatabase.filter(food => 
+                    food.name.toLowerCase().includes(searchValue)
+                );
+            }
+            
+            // Sort by relevance
+            matchingFoods.sort((a, b) => {
+                const aName = a.name.toLowerCase();
+                const bName = b.name.toLowerCase();
+                const aStarts = aName.startsWith(searchValue);
+                const bStarts = bName.startsWith(searchValue);
+                
+                if (aStarts && !bStarts) return -1;
+                if (!aStarts && bStarts) return 1;
+                return aName.localeCompare(bName);
+            });
+            
+            // Limit to top 20 results
+            matchingFoods = matchingFoods.slice(0, 20);
+            
+            if (matchingFoods.length === 0) {
+                dropdown.innerHTML = '<div style="padding: 12px; text-align: center; color: #999;">No foods found</div>';
+                dropdown.style.display = 'block';
+                return;
+            }
+            
+            // Render dropdown
+            dropdown.innerHTML = matchingFoods.map(food => {
+                const calories = food.calories || (food.protein * 4 + food.carbs * 4 + food.fats * 9);
+                return `
+                    <div onclick="selectDayFood('${food.name.replace(/'/g, "\\'")}')" 
+                        style="padding: 10px 12px; cursor: pointer; border-bottom: 1px solid #f0f0f0;"
+                        onmouseover="this.style.background='#e8f8f3'" 
+                        onmouseout="this.style.background='white'">
+                        <div style="font-weight: 600; color: #065f46; margin-bottom: 2px;">${food.name}</div>
+                        <div style="font-size: 0.8rem; color: #666;">
+                            ${food.servingAmount} ${UNIT_LABELS[food.servingUnit]} • 
+                            P: ${food.protein}g C: ${food.carbs}g F: ${food.fats}g • 
+                            ${calories.toFixed(0)} cal
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            
+            dropdown.style.display = 'block';
+        }
+
+        function selectDayFood(foodName) {
+            const food = foodDatabase.find(f => f.name === foodName);
+            if (!food) return;
+            
+            document.getElementById('searchFoodForDay').value = food.name;
+            document.getElementById('selectedFoodForDay').value = food.name;
+            document.getElementById('dayFoodDropdown').style.display = 'none';
+        }
+
+        function filterDayFoodDropdown() {
+            // Legacy function - redirect to new one
+            filterDayFoodDropdownCustom();
+        }
+
+        // ========== END NEW CUSTOM AUTOCOMPLETE SYSTEM ==========
+
+        // Dynamic meal search with autocomplete dropdown (OLD - keeping for compatibility)
         let selectedMealForDay = null;
 
         function showMealDropdown() {
@@ -2420,7 +2723,7 @@
         }
 
         function addFoodToDay() {
-            const foodName = document.getElementById('selectFoodForDay').value.trim();
+            const foodName = document.getElementById('selectedFoodForDay').value || document.getElementById('searchFoodForDay').value.trim();
             if (!foodName) {
                 alert('Please select a food first');
                 return;
@@ -2458,14 +2761,14 @@
             syncToFirebase();
             
             // Reset inputs
-            document.getElementById('selectFoodForDay').value = '';
             document.getElementById('searchFoodForDay').value = '';
+            document.getElementById('selectedFoodForDay').value = '';
             document.getElementById('foodAmountForDay').value = '1';
-            filterDayFoodDropdown();
+            document.getElementById('dayFoodDropdown').style.display = 'none';
         }
 
         function addMealToDay() {
-            const mealName = document.getElementById('selectMealForDay').value.trim();
+            const mealName = document.getElementById('selectedMealForDay').value || document.getElementById('searchMealForDay').value.trim();
             if (!mealName) {
                 alert('Please select a meal first');
                 return;
@@ -2493,10 +2796,10 @@
             syncToFirebase();
             
             // Reset inputs
-            document.getElementById('selectMealForDay').value = '';
             document.getElementById('searchMealForDay').value = '';
+            document.getElementById('selectedMealForDay').value = '';
             document.getElementById('mealServingsForDay').value = '1';
-            filterDayMealDropdown();
+            document.getElementById('dayMealDropdown').style.display = 'none';
         }
 
         function removeMealFromDay(id) {
