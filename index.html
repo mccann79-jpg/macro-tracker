@@ -1059,9 +1059,17 @@
                     </div>
                 </div>
 
-                <!-- Chart Canvas -->
+                <!-- Chart Canvases -->
+                <div style="margin-bottom: 30px;">
+                    <h3 style="color: #3b82f6; margin-bottom: 10px;">📊 Protein Tracking</h3>
+                    <canvas id="proteinChart" width="400" height="200" style="max-width: 100%;"></canvas>
+                    <div id="proteinStats" style="margin-top: 10px; padding: 12px; background: #f0f9ff; border-radius: 8px; font-size: 0.9rem;"></div>
+                </div>
+
                 <div style="margin-bottom: 20px;">
-                    <canvas id="historyChart" width="400" height="200" style="max-width: 100%;"></canvas>
+                    <h3 style="color: #f59e0b; margin-bottom: 10px;">🔥 Calorie Tracking</h3>
+                    <canvas id="calorieChart" width="400" height="200" style="max-width: 100%;"></canvas>
+                    <div id="calorieStats" style="margin-top: 10px; padding: 12px; background: #fffbeb; border-radius: 8px; font-size: 0.9rem;"></div>
                 </div>
 
                 <!-- History Table -->
@@ -2175,16 +2183,8 @@
         }
 
         function updateMealSelector() {
-            // Sort meals alphabetically by name
-            const sortedMeals = [...savedMeals].sort((a, b) => a.name.localeCompare(b.name));
-            
-            const select = document.getElementById('selectMealForDay');
-            if (select) {
-                select.innerHTML = '<option value="">Choose a meal...</option>' +
-                    sortedMeals.map(meal => 
-                        `<option value="${meal.name}">${meal.name}</option>`
-                    ).join('');
-            }
+            // Using custom autocomplete now - this function is kept as no-op for compatibility
+            return;
         }
 
         // ========== NEW CUSTOM AUTOCOMPLETE SYSTEM ==========
@@ -2621,16 +2621,8 @@
         }
 
         function updateDayFoodSelector() {
-            // Sort foods alphabetically by name
-            const sortedFoods = [...foodDatabase].sort((a, b) => a.name.localeCompare(b.name));
-            
-            const select = document.getElementById('selectFoodForDay');
-            if (select) {
-                select.innerHTML = '<option value="">Choose a food...</option>' +
-                    sortedFoods.map(food => 
-                        `<option value="${food.name}">${food.name}</option>`
-                    ).join('');
-            }
+            // Using custom autocomplete now - this function is kept as no-op for compatibility
+            return;
         }
 
         function filterDayFoodDropdown() {
@@ -3476,85 +3468,138 @@
 
         // Draw history chart
         function drawHistoryChart() {
-            const canvas = document.getElementById('historyChart');
-            const ctx = canvas.getContext('2d');
+            // Draw both charts
+            drawProteinChart();
+            drawCalorieChart();
+        }
+
+        function drawProteinChart() {
+            const canvas = document.getElementById('proteinChart');
+            if (!canvas) return;
             
-            // Clear canvas
+            const ctx = canvas.getContext('2d');
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
             if (dayHistory.length === 0) {
                 ctx.fillStyle = '#999';
                 ctx.font = '14px Arial';
                 ctx.textAlign = 'center';
-                ctx.fillText('No data to display', canvas.width / 2, canvas.height / 2);
+                ctx.fillText('No protein data yet', canvas.width / 2, canvas.height / 2);
+                document.getElementById('proteinStats').innerHTML = '<div style="text-align: center; color: #999;">Start tracking to see stats</div>';
                 return;
             }
 
-            // Get last 14 days
-            const recentData = dayHistory.slice(0, 14).reverse();
-            
+            // Get last 30 days and calculate 7-day rolling averages
+            const recentData = dayHistory.slice(0, 30).reverse();
+            recentData.forEach((entry, index) => {
+                const last7 = recentData.slice(Math.max(0, index - 6), index + 1);
+                const avg = last7.reduce((sum, e) => sum + e.protein, 0) / last7.length;
+                entry.protein7DayAvg = avg;
+            });
+
             // Chart dimensions
-            const padding = 40;
+            const padding = 50;
             const chartWidth = canvas.width - padding * 2;
             const chartHeight = canvas.height - padding * 2;
 
-            // Find max values
-            const maxCalories = Math.max(...recentData.map(d => Math.max(d.calories, d.calorieGoal || 0)));
-            const maxProtein = Math.max(...recentData.map(d => Math.max(d.protein, d.proteinGoal || 0)));
+            // Find max value
+            const maxProtein = Math.max(
+                ...recentData.map(d => Math.max(d.protein, d.proteinGoal || 0, d.protein7DayAvg || 0))
+            ) * 1.1;
+
+            // Draw grid lines
+            ctx.strokeStyle = '#e5e7eb';
+            ctx.lineWidth = 1;
+            for (let i = 0; i <= 4; i++) {
+                const y = padding + (chartHeight / 4) * i;
+                const value = maxProtein - (maxProtein / 4) * i;
+                
+                ctx.beginPath();
+                ctx.moveTo(padding, y);
+                ctx.lineTo(canvas.width - padding, y);
+                ctx.stroke();
+                
+                // Y-axis labels
+                ctx.fillStyle = '#666';
+                ctx.font = '11px Arial';
+                ctx.textAlign = 'right';
+                ctx.fillText(Math.round(value) + 'g', padding - 5, y + 4);
+            }
 
             // Draw axes
-            ctx.strokeStyle = '#ccc';
-            ctx.lineWidth = 1;
+            ctx.strokeStyle = '#333';
+            ctx.lineWidth = 2;
             ctx.beginPath();
             ctx.moveTo(padding, padding);
             ctx.lineTo(padding, canvas.height - padding);
             ctx.lineTo(canvas.width - padding, canvas.height - padding);
             ctx.stroke();
 
-            // Draw data
-            const barWidth = chartWidth / recentData.length / 2;
-            const spacing = chartWidth / recentData.length;
+            const getX = (index) => padding + (chartWidth / (recentData.length - 1)) * index;
+            const getY = (protein) => canvas.height - padding - (protein / maxProtein) * chartHeight;
 
-            recentData.forEach((entry, i) => {
-                const x = padding + i * spacing;
+            // Draw goal line
+            if (recentData[0].proteinGoal) {
+                ctx.strokeStyle = '#93c5fd';
+                ctx.lineWidth = 2;
+                ctx.setLineDash([5, 5]);
+                ctx.beginPath();
+                const goalY = getY(recentData[0].proteinGoal);
+                ctx.moveTo(padding, goalY);
+                ctx.lineTo(canvas.width - padding, goalY);
+                ctx.stroke();
+                ctx.setLineDash([]);
                 
-                // Calories bar (left, blue)
-                const calHeight = (entry.calories / maxCalories) * chartHeight;
+                // Goal label
                 ctx.fillStyle = '#3b82f6';
-                ctx.fillRect(x, canvas.height - padding - calHeight, barWidth * 0.8, calHeight);
+                ctx.font = 'bold 11px Arial';
+                ctx.textAlign = 'left';
+                ctx.fillText(`Goal: ${recentData[0].proteinGoal}g`, padding + 5, goalY - 5);
+            }
 
-                // Calorie goal line
-                if (entry.calorieGoal) {
-                    const goalY = canvas.height - padding - (entry.calorieGoal / maxCalories) * chartHeight;
-                    ctx.strokeStyle = '#1e40af';
-                    ctx.lineWidth = 2;
-                    ctx.beginPath();
-                    ctx.moveTo(x, goalY);
-                    ctx.lineTo(x + barWidth * 0.8, goalY);
-                    ctx.stroke();
-                }
+            // Draw 7-day average line
+            ctx.strokeStyle = '#10b981';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            recentData.forEach((entry, i) => {
+                const x = getX(i);
+                const y = getY(entry.protein7DayAvg);
+                if (i === 0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+            });
+            ctx.stroke();
 
-                // Protein bar (right, green)
-                const proteinHeight = (entry.protein / maxProtein) * chartHeight;
+            // Draw daily protein bars
+            const barWidth = Math.min(chartWidth / recentData.length * 0.6, 15);
+            recentData.forEach((entry, i) => {
+                const x = getX(i);
+                const y = getY(entry.protein);
+                const height = canvas.height - padding - y;
+                
+                ctx.fillStyle = entry.protein >= (entry.proteinGoal || 0) ? '#3b82f6' : '#93c5fd';
+                ctx.fillRect(x - barWidth / 2, y, barWidth, height);
+            });
+
+            // Draw points on 7-day line
+            recentData.forEach((entry, i) => {
+                const x = getX(i);
+                const y = getY(entry.protein7DayAvg);
                 ctx.fillStyle = '#10b981';
-                ctx.fillRect(x + barWidth, canvas.height - padding - proteinHeight, barWidth * 0.8, proteinHeight);
+                ctx.beginPath();
+                ctx.arc(x, y, 4, 0, Math.PI * 2);
+                ctx.fill();
+            });
 
-                // Protein goal line
-                if (entry.proteinGoal) {
-                    const goalY = canvas.height - padding - (entry.proteinGoal / maxProtein) * chartHeight;
-                    ctx.strokeStyle = '#047857';
-                    ctx.lineWidth = 2;
-                    ctx.beginPath();
-                    ctx.moveTo(x + barWidth, goalY);
-                    ctx.lineTo(x + barWidth * 1.8, goalY);
-                    ctx.stroke();
+            // Date labels (every nth date)
+            ctx.fillStyle = '#666';
+            ctx.font = '10px Arial';
+            ctx.textAlign = 'center';
+            const labelInterval = Math.max(1, Math.floor(recentData.length / 8));
+            recentData.forEach((entry, i) => {
+                if (i % labelInterval === 0 || i === recentData.length - 1) {
+                    const dateLabel = new Date(entry.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                    ctx.fillText(dateLabel, getX(i), canvas.height - padding + 20);
                 }
-
-                // Date label
-                ctx.fillStyle = '#666';
-                ctx.font = '9px Arial';
-                ctx.textAlign = 'center';
-                ctx.fillText(entry.date.slice(5), x + barWidth, canvas.height - padding + 15);
             });
 
             // Legend
@@ -3564,12 +3609,227 @@
             ctx.fillStyle = '#3b82f6';
             ctx.fillRect(padding, 10, 15, 10);
             ctx.fillStyle = '#333';
-            ctx.fillText('Calories', padding + 20, 18);
-
-            ctx.fillStyle = '#10b981';
-            ctx.fillRect(padding + 100, 10, 15, 10);
+            ctx.fillText('Daily', padding + 20, 18);
+            
+            ctx.strokeStyle = '#10b981';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.moveTo(padding + 80, 15);
+            ctx.lineTo(padding + 95, 15);
+            ctx.stroke();
             ctx.fillStyle = '#333';
-            ctx.fillText('Protein', padding + 120, 18);
+            ctx.fillText('7-Day Avg', padding + 100, 18);
+
+            // Calculate and display stats
+            const last7Days = recentData.slice(-7);
+            const avg7Day = last7Days.reduce((sum, e) => sum + e.protein, 0) / last7Days.length;
+            const goal = recentData[recentData.length - 1].proteinGoal || 0;
+            const daysOverGoal = recentData.filter(e => e.protein >= (e.proteinGoal || Infinity)).length;
+            const avgDiff = avg7Day - goal;
+
+            document.getElementById('proteinStats').innerHTML = `
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px;">
+                    <div>
+                        <div style="font-size: 0.75rem; color: #666; text-transform: uppercase;">7-Day Average</div>
+                        <div style="font-size: 1.3rem; font-weight: 700; color: #3b82f6;">${avg7Day.toFixed(1)}g</div>
+                    </div>
+                    <div>
+                        <div style="font-size: 0.75rem; color: #666; text-transform: uppercase;">Goal</div>
+                        <div style="font-size: 1.3rem; font-weight: 700; color: #3b82f6;">${goal}g</div>
+                    </div>
+                    <div>
+                        <div style="font-size: 0.75rem; color: #666; text-transform: uppercase;">Difference</div>
+                        <div style="font-size: 1.3rem; font-weight: 700; color: ${avgDiff >= 0 ? '#10b981' : '#dc2626'};">
+                            ${avgDiff >= 0 ? '+' : ''}${avgDiff.toFixed(1)}g
+                        </div>
+                    </div>
+                    <div>
+                        <div style="font-size: 0.75rem; color: #666; text-transform: uppercase;">Hit Goal</div>
+                        <div style="font-size: 1.3rem; font-weight: 700; color: #3b82f6;">${daysOverGoal}/${recentData.length} days</div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function drawCalorieChart() {
+            const canvas = document.getElementById('calorieChart');
+            if (!canvas) return;
+            
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            if (dayHistory.length === 0) {
+                ctx.fillStyle = '#999';
+                ctx.font = '14px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText('No calorie data yet', canvas.width / 2, canvas.height / 2);
+                document.getElementById('calorieStats').innerHTML = '<div style="text-align: center; color: #999;">Start tracking to see stats</div>';
+                return;
+            }
+
+            // Get last 30 days and calculate 7-day rolling averages
+            const recentData = dayHistory.slice(0, 30).reverse();
+            recentData.forEach((entry, index) => {
+                const last7 = recentData.slice(Math.max(0, index - 6), index + 1);
+                const avg = last7.reduce((sum, e) => sum + e.calories, 0) / last7.length;
+                entry.calorie7DayAvg = avg;
+            });
+
+            // Chart dimensions
+            const padding = 50;
+            const chartWidth = canvas.width - padding * 2;
+            const chartHeight = canvas.height - padding * 2;
+
+            // Find max value
+            const maxCalories = Math.max(
+                ...recentData.map(d => Math.max(d.calories, d.calorieGoal || 0, d.calorie7DayAvg || 0))
+            ) * 1.1;
+
+            // Draw grid lines
+            ctx.strokeStyle = '#e5e7eb';
+            ctx.lineWidth = 1;
+            for (let i = 0; i <= 4; i++) {
+                const y = padding + (chartHeight / 4) * i;
+                const value = maxCalories - (maxCalories / 4) * i;
+                
+                ctx.beginPath();
+                ctx.moveTo(padding, y);
+                ctx.lineTo(canvas.width - padding, y);
+                ctx.stroke();
+                
+                // Y-axis labels
+                ctx.fillStyle = '#666';
+                ctx.font = '11px Arial';
+                ctx.textAlign = 'right';
+                ctx.fillText(Math.round(value), padding - 5, y + 4);
+            }
+
+            // Draw axes
+            ctx.strokeStyle = '#333';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(padding, padding);
+            ctx.lineTo(padding, canvas.height - padding);
+            ctx.lineTo(canvas.width - padding, canvas.height - padding);
+            ctx.stroke();
+
+            const getX = (index) => padding + (chartWidth / (recentData.length - 1)) * index;
+            const getY = (calories) => canvas.height - padding - (calories / maxCalories) * chartHeight;
+
+            // Draw goal line
+            if (recentData[0].calorieGoal) {
+                ctx.strokeStyle = '#fcd34d';
+                ctx.lineWidth = 2;
+                ctx.setLineDash([5, 5]);
+                ctx.beginPath();
+                const goalY = getY(recentData[0].calorieGoal);
+                ctx.moveTo(padding, goalY);
+                ctx.lineTo(canvas.width - padding, goalY);
+                ctx.stroke();
+                ctx.setLineDash([]);
+                
+                // Goal label
+                ctx.fillStyle = '#f59e0b';
+                ctx.font = 'bold 11px Arial';
+                ctx.textAlign = 'left';
+                ctx.fillText(`Goal: ${recentData[0].calorieGoal}`, padding + 5, goalY - 5);
+            }
+
+            // Draw 7-day average line
+            ctx.strokeStyle = '#dc2626';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            recentData.forEach((entry, i) => {
+                const x = getX(i);
+                const y = getY(entry.calorie7DayAvg);
+                if (i === 0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+            });
+            ctx.stroke();
+
+            // Draw daily calorie bars
+            const barWidth = Math.min(chartWidth / recentData.length * 0.6, 15);
+            recentData.forEach((entry, i) => {
+                const x = getX(i);
+                const y = getY(entry.calories);
+                const height = canvas.height - padding - y;
+                
+                const withinGoal = entry.calorieGoal && Math.abs(entry.calories - entry.calorieGoal) <= entry.calorieGoal * 0.1;
+                ctx.fillStyle = withinGoal ? '#f59e0b' : '#fcd34d';
+                ctx.fillRect(x - barWidth / 2, y, barWidth, height);
+            });
+
+            // Draw points on 7-day line
+            recentData.forEach((entry, i) => {
+                const x = getX(i);
+                const y = getY(entry.calorie7DayAvg);
+                ctx.fillStyle = '#dc2626';
+                ctx.beginPath();
+                ctx.arc(x, y, 4, 0, Math.PI * 2);
+                ctx.fill();
+            });
+
+            // Date labels (every nth date)
+            ctx.fillStyle = '#666';
+            ctx.font = '10px Arial';
+            ctx.textAlign = 'center';
+            const labelInterval = Math.max(1, Math.floor(recentData.length / 8));
+            recentData.forEach((entry, i) => {
+                if (i % labelInterval === 0 || i === recentData.length - 1) {
+                    const dateLabel = new Date(entry.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                    ctx.fillText(dateLabel, getX(i), canvas.height - padding + 20);
+                }
+            });
+
+            // Legend
+            ctx.font = '11px Arial';
+            ctx.textAlign = 'left';
+            
+            ctx.fillStyle = '#f59e0b';
+            ctx.fillRect(padding, 10, 15, 10);
+            ctx.fillStyle = '#333';
+            ctx.fillText('Daily', padding + 20, 18);
+            
+            ctx.strokeStyle = '#dc2626';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.moveTo(padding + 80, 15);
+            ctx.lineTo(padding + 95, 15);
+            ctx.stroke();
+            ctx.fillStyle = '#333';
+            ctx.fillText('7-Day Avg', padding + 100, 18);
+
+            // Calculate and display stats
+            const last7Days = recentData.slice(-7);
+            const avg7Day = last7Days.reduce((sum, e) => sum + e.calories, 0) / last7Days.length;
+            const goal = recentData[recentData.length - 1].calorieGoal || 0;
+            const daysWithinGoal = recentData.filter(e => {
+                return e.calorieGoal && Math.abs(e.calories - e.calorieGoal) <= e.calorieGoal * 0.1;
+            }).length;
+            const avgDiff = avg7Day - goal;
+
+            document.getElementById('calorieStats').innerHTML = `
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px;">
+                    <div>
+                        <div style="font-size: 0.75rem; color: #666; text-transform: uppercase;">7-Day Average</div>
+                        <div style="font-size: 1.3rem; font-weight: 700; color: #f59e0b;">${Math.round(avg7Day)}</div>
+                    </div>
+                    <div>
+                        <div style="font-size: 0.75rem; color: #666; text-transform: uppercase;">Goal</div>
+                        <div style="font-size: 1.3rem; font-weight: 700; color: #f59e0b;">${goal}</div>
+                    </div>
+                    <div>
+                        <div style="font-size: 0.75rem; color: #666; text-transform: uppercase;">Difference</div>
+                        <div style="font-size: 1.3rem; font-weight: 700; color: ${avgDiff >= -goal * 0.1 && avgDiff <= goal * 0.1 ? '#10b981' : '#dc2626'};">
+                            ${avgDiff >= 0 ? '+' : ''}${Math.round(avgDiff)}
+                        </div>
+                    </div>
+                    <div>
+                        <div style="font-size: 0.75rem; color: #666; text-transform: uppercase;">Within ±10%</div>
+                        <div style="font-size: 1.3rem; font-weight: 700; color: #f59e0b;">${daysWithinGoal}/${recentData.length} days</div>
+                    </div>
+                </div>
+            `;
         }
 
         // Edit history entry - inline editing
