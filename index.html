@@ -1311,6 +1311,18 @@
         let weightData = JSON.parse(localStorage.getItem('weightData')) || [];
         let goalWeight = localStorage.getItem('goalWeight') ? parseFloat(localStorage.getItem('goalWeight')) : null;
 
+        // CLEANUP: Remove any invalid entries from dayHistory (like meal objects that got mixed in)
+        const originalHistoryLength = dayHistory.length;
+        dayHistory = dayHistory.filter(entry => {
+            // Keep only entries with valid YYYY-MM-DD dates
+            return entry.date && /^\d{4}-\d{2}-\d{2}$/.test(entry.date) && typeof entry.calories === 'number';
+        });
+        
+        if (dayHistory.length < originalHistoryLength) {
+            console.log(`🧹 Cleaned up history: removed ${originalHistoryLength - dayHistory.length} invalid entries`);
+            localStorage.setItem('dayHistory', JSON.stringify(dayHistory));
+        }
+
         // Load sample data if empty (for testing)
         if (foodDatabase.length === 0) {
             foodDatabase = [
@@ -3755,17 +3767,23 @@
 
             console.log('📊 Rendering history, entries:', dayHistory.length);
             
-            if (dayHistory.length === 0) {
+            // Filter to only show entries with valid dates (not meal objects)
+            const validHistory = dayHistory.filter(entry => {
+                // Must have a date field that looks like YYYY-MM-DD
+                return entry.date && /^\d{4}-\d{2}-\d{2}$/.test(entry.date);
+            });
+            
+            if (validHistory.length === 0) {
                 tbody.innerHTML = '';
                 emptyMessage.style.display = 'block';
-                console.log('⚠️ No history to display');
+                console.log('⚠️ No valid history to display');
                 return;
             }
 
             emptyMessage.style.display = 'none';
-            console.log('✅ Rendering', dayHistory.length, 'history entries');
+            console.log('✅ Rendering', validHistory.length, 'valid history entries (filtered from', dayHistory.length, 'total)');
 
-            tbody.innerHTML = dayHistory.map((entry, index) => {
+            tbody.innerHTML = validHistory.map((entry, index) => {
                 const rowBg = index % 2 === 0 ? 'white' : '#f8f9fa';
                 const calDiff = entry.calorieGoal ? entry.calories - entry.calorieGoal : null;
                 const proteinDiff = entry.proteinGoal ? entry.protein - entry.proteinGoal : null;
