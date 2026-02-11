@@ -853,7 +853,14 @@
 
             <!-- Saved Meals Section -->
             <div class="card">
-                <h2>Saved Meals</h2>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px;">
+                    <h2 style="margin-bottom: 0;">Saved Meals</h2>
+                    <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                        <button type="button" class="btn btn-success" onclick="exportSavedMeals()" style="padding: 8px 12px; font-size: 0.85rem; white-space: nowrap;">⬇ Export</button>
+                        <button type="button" class="btn btn-success" onclick="document.getElementById('importMealsInput').click()" style="padding: 8px 12px; font-size: 0.85rem; white-space: nowrap;">⬆ Import</button>
+                        <input type="file" id="importMealsInput" accept=".csv" style="display: none;" onchange="importSavedMeals(event)">
+                    </div>
+                </div>
                 <div style="overflow-x: auto; -webkit-overflow-scrolling: touch;">
                     <div id="savedMealsList"></div>
                 </div>
@@ -1396,70 +1403,93 @@
             firebaseRef.once('value', (snapshot) => {
                 const data = snapshot.val();
                 
+                console.log('📡 Firebase data loaded:', data ? 'has data' : 'empty');
+                
                 if (data) {
-                    // Data exists in cloud - but check if local data is newer/better
-                    const hasLocalData = localStorage.getItem('savedMeals') || localStorage.getItem('todaysMeals') || localStorage.getItem('foodDatabase');
-                    const hasCloudData = data.foodDatabase || data.savedMeals || data.todaysMeals;
+                    // Check what's in cloud vs local
+                    const cloudFoods = data.foodDatabase ? data.foodDatabase.length : 0;
+                    const cloudMeals = data.savedMeals ? data.savedMeals.length : 0;
+                    const cloudToday = data.todaysMeals ? data.todaysMeals.length : 0;
+                    const cloudHistory = data.dayHistory ? data.dayHistory.length : 0;
+                    const cloudWeight = data.weightData ? data.weightData.length : 0;
                     
-                    // If we have local data but cloud is empty, upload local instead of clearing
-                    if (hasLocalData && !hasCloudData) {
-                        console.log('⚠️ Cloud is empty but local has data - keeping local data');
-                        syncToFirebase();
-                        return;
-                    }
+                    const localFoods = foodDatabase.length;
+                    const localMeals = savedMeals.length;
+                    const localToday = todaysMeals.length;
+                    const localHistory = dayHistory.length;
+                    const localWeight = weightData.length;
                     
-                    // Load cloud data
-                    if (data.foodDatabase) {
+                    console.log('☁️ Cloud has:', {foods: cloudFoods, meals: cloudMeals, today: cloudToday, history: cloudHistory, weight: cloudWeight});
+                    console.log('💾 Local has:', {foods: localFoods, meals: localMeals, today: localToday, history: localHistory, weight: localWeight});
+                    
+                    // Only load from cloud if cloud has more data than local
+                    let loadedFromCloud = false;
+                    
+                    if (cloudFoods > localFoods && data.foodDatabase) {
+                        console.log('⬇️ Loading foods from cloud');
                         foodDatabase = data.foodDatabase;
                         localStorage.setItem('foodDatabase', JSON.stringify(foodDatabase));
+                        loadedFromCloud = true;
                     }
-                    if (data.savedMeals) {
+                    
+                    if (cloudMeals > localMeals && data.savedMeals) {
+                        console.log('⬇️ Loading meals from cloud');
                         savedMeals = data.savedMeals;
                         localStorage.setItem('savedMeals', JSON.stringify(savedMeals));
+                        loadedFromCloud = true;
                     }
-                    if (data.todaysMeals) {
+                    
+                    if (cloudToday > localToday && data.todaysMeals) {
+                        console.log('⬇️ Loading today meals from cloud');
                         todaysMeals = data.todaysMeals;
                         localStorage.setItem('todaysMeals', JSON.stringify(todaysMeals));
+                        loadedFromCloud = true;
                     }
+                    
+                    if (cloudHistory > localHistory && data.dayHistory) {
+                        console.log('⬇️ Loading history from cloud');
+                        dayHistory = data.dayHistory;
+                        localStorage.setItem('dayHistory', JSON.stringify(dayHistory));
+                        loadedFromCloud = true;
+                    }
+                    
+                    if (cloudWeight > localWeight && data.weightData) {
+                        console.log('⬇️ Loading weight data from cloud');
+                        weightData = data.weightData;
+                        localStorage.setItem('weightData', JSON.stringify(weightData));
+                        loadedFromCloud = true;
+                    }
+                    
                     if (data.dailyGoals) {
                         dailyGoals = data.dailyGoals;
                         localStorage.setItem('dailyGoals', JSON.stringify(dailyGoals));
                     }
-                    if (data.dayHistory) {
-                        dayHistory = data.dayHistory;
-                        localStorage.setItem('dayHistory', JSON.stringify(dayHistory));
-                    }
-                    if (data.weightData) {
-                        weightData = data.weightData;
-                        localStorage.setItem('weightData', JSON.stringify(weightData));
-                    }
                     
-                    // Refresh UI with loaded data
-                    console.log('🔄 Refreshing UI with Firebase data...');
-                    renderFoodList();
-                    updateFoodSelectors();
-                    renderSavedMeals();
-                    updateMealSelector();
-                    renderDayMeals();
-                    calculateDayTotals();
-                    displayGoals();
-                    renderHistory();
-                    drawHistoryChart();
-                    renderWeightTable();
-                    drawWeightChart();
-                    
-                    console.log('✅ Data loaded from cloud');
-                    console.log('📊 Data counts:', {
-                        foods: foodDatabase.length,
-                        meals: savedMeals.length,
-                        todayMeals: todaysMeals.length,
-                        history: dayHistory.length,
-                        weight: weightData.length
-                    });
+                    if (loadedFromCloud) {
+                        console.log('✅ Loaded newer data from cloud');
+                        // Refresh UI with loaded data
+                        renderFoodList();
+                        updateFoodSelectors();
+                        renderSavedMeals();
+                        updateMealSelector();
+                        renderDayMeals();
+                        calculateDayTotals();
+                        displayGoals();
+                        renderHistory();
+                        drawHistoryChart();
+                        renderWeightTable();
+                        drawWeightChart();
+                    } else if (localFoods > 0 || localMeals > 0 || localWeight > 0) {
+                        // Local has more data - sync it to cloud
+                        console.log('⬆️ Local has more data - syncing to cloud');
+                        syncToFirebase();
+                    }
                 } else {
-                    // No data in cloud - upload local data
-                    syncToFirebase();
-                    console.log('✅ Local data uploaded to cloud');
+                    // No data in cloud - check if we have local data to upload
+                    if (foodDatabase.length > 0 || savedMeals.length > 0 || weightData.length > 0) {
+                        console.log('⬆️ Uploading local data to cloud');
+                        syncToFirebase();
+                    }
                 }
             });
 
@@ -1469,6 +1499,7 @@
                 if (data && data._lastSync) {
                     const localLastSync = parseInt(localStorage.getItem('lastSync') || '0');
                     if (data._lastSync > localLastSync) {
+                        console.log('🔄 Remote data is newer - updating local');
                         // Remote data is newer - update local
                         if (data.foodDatabase) {
                             foodDatabase = data.foodDatabase;
@@ -1532,6 +1563,62 @@
 
         // Initialize
         document.addEventListener('DOMContentLoaded', function() {
+            // EMERGENCY: Check if data exists but UI isn't showing it
+            console.log('🔍 Checking data on load...');
+            console.log('Foods in database:', foodDatabase.length);
+            console.log('Saved meals:', savedMeals.length);
+            console.log('Today meals:', todaysMeals.length);
+            console.log('Weight data:', weightData.length);
+            console.log('History:', dayHistory.length);
+            
+            // If data is empty but localStorage has it, recover
+            if (foodDatabase.length === 0) {
+                const storedFoods = localStorage.getItem('foodDatabase');
+                if (storedFoods) {
+                    console.log('⚠️ Food database empty but localStorage has data - recovering...');
+                    foodDatabase = JSON.parse(storedFoods);
+                }
+            }
+            
+            if (savedMeals.length === 0) {
+                const storedMeals = localStorage.getItem('savedMeals');
+                if (storedMeals) {
+                    console.log('⚠️ Saved meals empty but localStorage has data - recovering...');
+                    savedMeals = JSON.parse(storedMeals);
+                }
+            }
+            
+            if (todaysMeals.length === 0) {
+                const storedToday = localStorage.getItem('todaysMeals');
+                if (storedToday) {
+                    console.log('⚠️ Today meals empty but localStorage has data - recovering...');
+                    todaysMeals = JSON.parse(storedToday);
+                }
+            }
+            
+            if (weightData.length === 0) {
+                const storedWeight = localStorage.getItem('weightData');
+                if (storedWeight) {
+                    console.log('⚠️ Weight data empty but localStorage has data - recovering...');
+                    weightData = JSON.parse(storedWeight);
+                }
+            }
+            
+            if (dayHistory.length === 0) {
+                const storedHistory = localStorage.getItem('dayHistory');
+                if (storedHistory) {
+                    console.log('⚠️ Day history empty but localStorage has data - recovering...');
+                    dayHistory = JSON.parse(storedHistory);
+                }
+            }
+            
+            console.log('✅ After recovery check:');
+            console.log('Foods:', foodDatabase.length);
+            console.log('Meals:', savedMeals.length);
+            console.log('Today:', todaysMeals.length);
+            console.log('Weight:', weightData.length);
+            console.log('History:', dayHistory.length);
+            
             // Check if user has a PIN
             if (!userPin) {
                 showPinOverlay();
@@ -1888,13 +1975,24 @@
         }
 
         function addFoodToMealBuilder() {
-            const foodName = document.getElementById('selectedFoodForMeal').value || document.getElementById('searchFoodForMeal').value.trim();
+            // Get food name from either the hidden field (clicked) or the search box (typed)
+            let foodName = document.getElementById('selectedFoodForMeal').value;
             if (!foodName) {
-                return; // Silent fail if no food selected
+                foodName = document.getElementById('searchFoodForMeal').value.trim();
+            }
+            
+            if (!foodName) {
+                alert('Please select or type a food name');
+                return;
             }
 
-            const food = foodDatabase.find(f => f.name === foodName);
-            if (!food) return;
+            // Find food (case-insensitive match)
+            const food = foodDatabase.find(f => f.name.toLowerCase() === foodName.toLowerCase());
+            
+            if (!food) {
+                alert(`Food "${foodName}" not found in database. Please select from the dropdown.`);
+                return;
+            }
 
             currentMealBuilder.push({
                 ...food,
@@ -3016,6 +3114,207 @@
             }
         }
 
+        // Export saved meals to CSV
+        function exportSavedMeals() {
+            if (savedMeals.length === 0) {
+                alert('No saved meals to export!');
+                return;
+            }
+
+            // Create detailed CSV with meal contents
+            const csvRows = ['Meal Name,Total Servings,Food Name,Amount,Unit,Protein,Carbs,Fats,Fiber,Calories'];
+            
+            savedMeals.forEach(meal => {
+                meal.foods.forEach((food, index) => {
+                    const mealName = index === 0 ? meal.name : '';
+                    const totalServings = index === 0 ? meal.totalServings : '';
+                    
+                    csvRows.push([
+                        mealName ? `"${mealName}"` : '',
+                        totalServings,
+                        `"${food.name}"`,
+                        food.amount,
+                        food.unit,
+                        food.protein,
+                        food.carbs,
+                        food.fats,
+                        food.fiber || 0,
+                        food.calories || (food.protein * 4 + food.carbs * 4 + food.fats * 9)
+                    ].join(','));
+                });
+            });
+
+            const csv = csvRows.join('\n');
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `saved-meals-${new Date().toISOString().split('T')[0]}.csv`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        // Import saved meals from CSV
+        function importSavedMeals(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const csv = e.target.result;
+                    const lines = csv.split('\n').filter(line => line.trim());
+                    
+                    if (lines.length < 2) {
+                        alert('CSV file is empty or invalid!');
+                        return;
+                    }
+
+                    const meals = [];
+                    let currentMeal = null;
+
+                    for (let i = 1; i < lines.length; i++) {
+                        const line = lines[i];
+                        
+                        // Parse CSV line handling quoted values
+                        const parts = [];
+                        let current = '';
+                        let inQuotes = false;
+                        
+                        for (let j = 0; j < line.length; j++) {
+                            const char = line[j];
+                            if (char === '"') {
+                                inQuotes = !inQuotes;
+                            } else if (char === ',' && !inQuotes) {
+                                parts.push(current.trim());
+                                current = '';
+                            } else {
+                                current += char;
+                            }
+                        }
+                        parts.push(current.trim());
+
+                        if (parts.length < 10) continue;
+
+                        const mealName = parts[0];
+                        const totalServings = parts[1];
+                        const foodName = parts[2];
+                        const amount = parseFloat(parts[3]);
+                        const unit = parts[4];
+                        const protein = parseFloat(parts[5]);
+                        const carbs = parseFloat(parts[6]);
+                        const fats = parseFloat(parts[7]);
+                        const fiber = parseFloat(parts[8]) || 0;
+                        const calories = parseFloat(parts[9]) || (protein * 4 + carbs * 4 + fats * 9);
+
+                        // New meal starts
+                        if (mealName) {
+                            if (currentMeal) {
+                                meals.push(currentMeal);
+                            }
+                            currentMeal = {
+                                id: Date.now() + Math.random(),
+                                name: mealName,
+                                totalServings: parseFloat(totalServings) || 1,
+                                foods: []
+                            };
+                        }
+
+                        // Add food to current meal
+                        if (currentMeal && foodName) {
+                            currentMeal.foods.push({
+                                name: foodName,
+                                servingAmount: amount,
+                                servingUnit: unit,
+                                amount: amount,
+                                unit: unit,
+                                protein: protein,
+                                carbs: carbs,
+                                fats: fats,
+                                fiber: fiber,
+                                calories: calories
+                            });
+                        }
+                    }
+
+                    // Add last meal
+                    if (currentMeal) {
+                        meals.push(currentMeal);
+                    }
+
+                    if (meals.length === 0) {
+                        alert('No valid meal entries found in CSV!');
+                        return;
+                    }
+
+                    // Calculate per-serving macros for each meal
+                    meals.forEach(meal => {
+                        let totalProtein = 0, totalCarbs = 0, totalFats = 0, totalFiber = 0, totalCalories = 0;
+                        
+                        meal.foods.forEach(food => {
+                            totalProtein += food.protein;
+                            totalCarbs += food.carbs;
+                            totalFats += food.fats;
+                            totalFiber += food.fiber;
+                            totalCalories += food.calories;
+                        });
+
+                        meal.perServing = {
+                            protein: totalProtein / meal.totalServings,
+                            carbs: totalCarbs / meal.totalServings,
+                            fats: totalFats / meal.totalServings,
+                            fiber: totalFiber / meal.totalServings,
+                            calories: totalCalories / meal.totalServings
+                        };
+                    });
+
+                    // Check for duplicates and only add new meals
+                    let addedCount = 0;
+                    let skippedCount = 0;
+                    const duplicates = [];
+
+                    meals.forEach(newMeal => {
+                        const existingMeal = savedMeals.find(m => 
+                            m.name.toLowerCase() === newMeal.name.toLowerCase()
+                        );
+                        
+                        if (existingMeal) {
+                            skippedCount++;
+                            duplicates.push(newMeal.name);
+                        } else {
+                            savedMeals.push(newMeal);
+                            addedCount++;
+                        }
+                    });
+
+                    localStorage.setItem('savedMeals', JSON.stringify(savedMeals));
+                    renderSavedMeals();
+                    updateMealSelector();
+                    syncToFirebase();
+                    
+                    // Show detailed results
+                    let message = `Import Complete!\n\n`;
+                    message += `✅ Added: ${addedCount} new meals\n`;
+                    message += `⏭️ Skipped: ${skippedCount} duplicates\n`;
+                    message += `📊 Total meals: ${savedMeals.length}`;
+                    
+                    if (duplicates.length > 0 && duplicates.length <= 10) {
+                        message += `\n\nSkipped duplicates:\n${duplicates.join(', ')}`;
+                    } else if (duplicates.length > 10) {
+                        message += `\n\nSkipped duplicates:\n${duplicates.slice(0, 10).join(', ')}\n...and ${duplicates.length - 10} more`;
+                    }
+                    
+                    alert(message);
+                    event.target.value = '';
+                } catch (error) {
+                    alert('Error importing CSV: ' + error.message);
+                    console.error(error);
+                }
+            };
+            
+            reader.readAsText(file);
+        }
+
         // Export food database to CSV
         function exportFoodDatabase() {
             const foods = foodDatabase;
@@ -3399,13 +3698,17 @@
             const tbody = document.getElementById('historyTableBody');
             const emptyMessage = document.getElementById('emptyHistoryMessage');
 
+            console.log('📊 Rendering history, entries:', dayHistory.length);
+            
             if (dayHistory.length === 0) {
                 tbody.innerHTML = '';
                 emptyMessage.style.display = 'block';
+                console.log('⚠️ No history to display');
                 return;
             }
 
             emptyMessage.style.display = 'none';
+            console.log('✅ Rendering', dayHistory.length, 'history entries');
 
             tbody.innerHTML = dayHistory.map((entry, index) => {
                 const rowBg = index % 2 === 0 ? 'white' : '#f8f9fa';
